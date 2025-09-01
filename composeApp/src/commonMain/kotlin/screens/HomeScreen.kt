@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bottombar.BottomBarScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -38,7 +39,7 @@ class HomeScreen : Screen {
                     Text("Agregar Clase")
                 }
 
-                Button(onClick = { /* Futuro: Configuración */ }) {
+                Button(onClick = { navigator.push(BottomBarScreen()) }) {
                     Text("Configuración")
                 }
             }
