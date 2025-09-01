@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +21,7 @@ object TaskTab : Tab {
     override val options: TabOptions
         @Composable
         get() {
-            val icon = rememberVectorPainter(Icons.Default.Task)
+            val icon = rememberVectorPainter(Icons.Default.Checklist)
             return remember {
                 TabOptions(
                     index = 2u,

@@ -1,6 +1,7 @@
 package bottombar
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -9,6 +10,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.*
 import bottombar.*
+import screens.AddClassScreen
 import screens.HomeScreen
 
 class BottomBarScreen : Screen {
@@ -64,6 +66,15 @@ class BottomBarScreen : Screen {
                                 CalendarTab.options.icon?.let { Icon(it, contentDescription = null) }
                             }
                         )
+                    }
+                },
+                floatingActionButton = {
+                    if (tabNavigator.current == HomeTab) {
+                        FloatingActionButton(onClick = {
+                            navigator.push(AddClassScreen())
+                        }) {
+                            Icon(Icons.Default.Add, contentDescription = "Agregar")
+                        }
                     }
                 },
                 content = { CurrentTab() }

@@ -7,6 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bottombar.BottomBarScreen
+import bottombar.HomeTab
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -26,7 +28,7 @@ class AddClassScreen : Screen {
                 TopAppBar(
                     title = { Text("Agregar Clase") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(HomeScreen()) }) {
+                        IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }

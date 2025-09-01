@@ -44,7 +44,7 @@ object HomeTab : Tab {
             return remember {
                 TabOptions(
                     index = 0u,
-                    title = "Home",
+                    title = "Horario de Clases",
                     icon = icon
                 )
             }
