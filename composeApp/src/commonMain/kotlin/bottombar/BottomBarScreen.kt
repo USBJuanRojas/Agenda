@@ -3,6 +3,7 @@ package bottombar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.screen.Screen
@@ -26,11 +27,11 @@ class BottomBarScreen : Screen {
                 topBar = {
                     TopAppBar(
                         title = { Text(tabNavigator.current.options.title) },
-                        navigationIcon = {
+                        actions = {
                             IconButton(onClick = {
-                                navigator.push(HomeScreen()) // Vuelve al menú principal
+                                // Por ahora no hace nada
                             }) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                                Icon(Icons.Default.Menu, contentDescription = "Menú")
                             }
                         }
                     )

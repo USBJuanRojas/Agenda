@@ -4,6 +4,10 @@ package screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -17,10 +21,12 @@ class HomeScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        var user by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
 
         Scaffold(
             topBar = {
-                TopAppBar(title = { Text("Gestión de Horario") })
+                TopAppBar(title = { Text("Inicia Sesión") })
             }
         ) { padding ->
             Column(
@@ -31,16 +37,23 @@ class HomeScreen : Screen {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                /*
                 Button(onClick = { navigator.push(ViewScheduleScreen()) }) {
                     Text("Ver Horario")
                 }
 
                 Button(onClick = { navigator.push(AddClassScreen()) }) {
                     Text("Agregar Clase")
-                }
+                }*/
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(value = user, onValueChange = { user = it }, label = { Text("Usuario") })
+                OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") })
 
                 Button(onClick = { navigator.push(BottomBarScreen()) }) {
                     Text("Configuración")
+                }
+                Button(onClick = { navigator.push(BottomBarScreen()) }) { //Por ahora no se valida
+                    Text("Registrarse")
                 }
             }
         }

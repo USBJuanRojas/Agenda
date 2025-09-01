@@ -50,7 +50,7 @@ class AddClassScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(onClick = {
-                    navigator.pop() // Por ahora solo vuelve
+                    navigator.push(BottomBarScreen()) // Por ahora solo vuelve
                 }) {
                     Text("Guardar (simulado)")
                 }
