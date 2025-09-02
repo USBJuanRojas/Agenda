@@ -37,6 +37,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.jjrn.Agenda.User
+import repository.UsersRepository
+
 
 class LoginScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -45,20 +47,11 @@ class LoginScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         var user by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
-        val usersDB = remember {
-            mutableStateListOf(
-                User("Administrador", "admin", "admin@example.com", "1234"),
-                User("Nicolas", "nico", "nicolas@example.com", "nico"),
-                User("Juan Jose", "juanjo", "jjrojas@example.com", "juanjo")
-            )
-        }
         var passwordVisible by remember { mutableStateOf(false) }
         var loginError by remember { mutableStateOf(false) }
 
         Scaffold(
-            topBar = {
-                TopAppBar(title = { Text("Inicia Sesión") })
-            }
+            topBar = { TopAppBar(title = { Text("Inicia Sesión") }) }
         ) { padding ->
             Column(
                 modifier = Modifier
@@ -68,11 +61,11 @@ class LoginScreen : Screen {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = user,
                     onValueChange = { user = it },
-                    label = { Text("Usuario") })
+                    label = { Text("Usuario") }
+                )
 
                 OutlinedTextField(
                     value = password,
@@ -84,11 +77,8 @@ class LoginScreen : Screen {
                     ),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        val image =
-                            if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                        val description =
-                            if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(imageVector = image, contentDescription = description)
                         }
@@ -96,7 +86,7 @@ class LoginScreen : Screen {
                 )
 
                 Button(onClick = {
-                    val usuarioValido = usersDB.any { it.user == user && it.password == password }
+                    val usuarioValido = UsersRepository.users.any { it.user == user && it.password == password }
                     if (usuarioValido) {
                         navigator.push(BottomBarScreen())
                     } else {
@@ -107,10 +97,7 @@ class LoginScreen : Screen {
                 }
 
                 if (loginError) {
-                    Text(
-                        "Usuario o contraseña incorrectos",
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Text("Usuario o contraseña incorrectos", color = MaterialTheme.colorScheme.error)
                 }
 
                 TextButton(onClick = { navigator.push(RegisterScreen()) }) {
