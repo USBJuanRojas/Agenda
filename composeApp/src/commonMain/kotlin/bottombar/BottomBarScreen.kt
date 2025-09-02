@@ -23,7 +23,8 @@ import screens.AddClassScreen
 import screens.AddTaskScreen
 import screens.LoginScreen
 
-class BottomBarScreen : Screen {
+class BottomBarScreen (private val initialTab: Tab = HomeTab) : Screen { // por defecto será HomeTab
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
@@ -31,7 +32,7 @@ class BottomBarScreen : Screen {
         val scope = rememberCoroutineScope()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
-        TabNavigator(HomeTab) { // HomeTab por defecto
+        TabNavigator(initialTab) { // HomeTab por defecto
             val tabNavigator = LocalTabNavigator.current
 
             // Truco: forzamos RTL SOLO para que el drawer "start" sea el lado derecho

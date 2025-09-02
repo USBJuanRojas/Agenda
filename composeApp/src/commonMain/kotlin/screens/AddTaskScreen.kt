@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
 import bottombar.HomeTab
+import bottombar.TaskTab
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -28,7 +29,7 @@ class AddTaskScreen : Screen {
                 TopAppBar(
                     title = { Text("Agregar Tarea") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
+                        IconButton(onClick = { navigator.push(BottomBarScreen(TaskTab)) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }
@@ -49,7 +50,7 @@ class AddTaskScreen : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(onClick = {
-                    navigator.push(BottomBarScreen()) // Por ahora solo vuelve
+                    navigator.push(BottomBarScreen(TaskTab)) // Por ahora solo vuelve
                 }) {
                     Text("Guardar (simulado)")
                 }
