@@ -1,8 +1,6 @@
 package bottombar
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,18 +21,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import screens.HomeScreen
+import screens.LoginScreen
 
 object HomeTab : Tab {
     override val options: TabOptions
@@ -66,7 +60,7 @@ object HomeTab : Tab {
                 TopAppBar(
                     title = { Text("Horario de Clases") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(HomeScreen()) }) {
+                        IconButton(onClick = { navigator.push(LoginScreen()) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }

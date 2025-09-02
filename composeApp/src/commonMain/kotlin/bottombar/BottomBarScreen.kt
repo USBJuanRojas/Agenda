@@ -7,7 +7,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -21,7 +20,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.*
 import kotlinx.coroutines.launch
 import screens.AddClassScreen
-import screens.HomeScreen
+import screens.LoginScreen
 
 class BottomBarScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +81,7 @@ class BottomBarScreen : Screen {
                                     label = { Text("Cerrar sesión") },
                                     selected = false,
                                     onClick = {
-                                        navigator.push(HomeScreen())
+                                        navigator.push(LoginScreen())
                                     },
                                     icon = {
                                         Icon(

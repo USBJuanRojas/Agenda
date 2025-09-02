@@ -16,7 +16,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 
-class HomeScreen : Screen {
+class LoginScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
@@ -50,9 +50,9 @@ class HomeScreen : Screen {
                 OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") })
 
                 Button(onClick = { navigator.push(BottomBarScreen()) }) {
-                    Text("Configuración")
+                    Text("Iniciar Sesión")
                 }
-                Button(onClick = { navigator.push(BottomBarScreen()) }) { //Por ahora no se valida
+                TextButton(onClick = { navigator.push(RegisterScreen()) }) { //Por ahora no se valida
                     Text("Registrarse")
                 }
             }

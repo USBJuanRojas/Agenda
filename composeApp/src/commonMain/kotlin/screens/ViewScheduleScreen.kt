@@ -30,7 +30,7 @@ class ViewScheduleScreen : Screen {
                 TopAppBar(
                     title = { Text("Horario de Clases") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(HomeScreen()) }) {
+                        IconButton(onClick = { navigator.push(LoginScreen()) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }
