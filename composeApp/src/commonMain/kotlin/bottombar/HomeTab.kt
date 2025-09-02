@@ -29,6 +29,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import screens.LoginScreen
+import org.jjrn.Agenda.Clase
 
 object HomeTab : Tab {
     override val options: TabOptions
@@ -91,5 +92,3 @@ object HomeTab : Tab {
         }
     }
 }
-
-data class Clase(val hora: String, val lugar: String, val asignatura: String, val profesor: String)
