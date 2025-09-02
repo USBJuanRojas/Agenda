@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,7 +55,7 @@ object HomeTab : Tab {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-
+        var showDialog by remember { mutableStateOf(false) }
         val horarioEjemplo = listOf(
             Clase("08:00 - 09:30", "Aula 101", "Matemáticas", "Prof. López"),
             Clase("09:40 - 11:10", "Aula 202", "Historia", "Prof. Ramírez"),
@@ -96,12 +97,33 @@ object HomeTab : Tab {
                                     Text(text = "Editar")
                                 }
                                 Button(onClick = {
-                                    //navigator.push()
+                                    showDialog = true
                                 }) {
                                     Text(text = "Eliminar")
                                 }
                             }
                         }
+                    }
+                    if (showDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDialog = false },
+                            title = { Text("Confirmar eliminación") },
+                            text = { Text("¿Seguro que deseas eliminar la clase ${clase.asignatura}?") },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        //delete
+                                    }
+                                ) {
+                                    Text("Eliminar")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDialog = false }) {
+                                    Text("Cancelar")
+                                }
+                            }
+                        )
                     }
                 }
             }
