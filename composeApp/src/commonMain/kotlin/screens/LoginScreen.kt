@@ -1,11 +1,25 @@
 package screens
 
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -33,9 +47,9 @@ class LoginScreen : Screen {
         var password by remember { mutableStateOf("") }
         val usersDB = remember {
             mutableStateListOf(
-                User( "Administrador", "admin","admin@example.com", "1234"),
-                User( "Nicolas", "nico","nicolas@example.com", "nico"),
-                User( "Juan Jose", "juanjo","jjrojas@example.com", "juanjo")
+                User("Administrador", "admin", "admin@example.com", "1234"),
+                User("Nicolas", "nico", "nicolas@example.com", "nico"),
+                User("Juan Jose", "juanjo", "jjrojas@example.com", "juanjo")
             )
         }
         var passwordVisible by remember { mutableStateOf(false) }
@@ -55,7 +69,10 @@ class LoginScreen : Screen {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(value = user, onValueChange = { user = it }, label = { Text("Usuario") })
+                OutlinedTextField(
+                    value = user,
+                    onValueChange = { user = it },
+                    label = { Text("Usuario") })
 
                 OutlinedTextField(
                     value = password,
@@ -67,8 +84,10 @@ class LoginScreen : Screen {
                     ),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                        val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                        val image =
+                            if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val description =
+                            if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
 
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(imageVector = image, contentDescription = description)
@@ -88,7 +107,10 @@ class LoginScreen : Screen {
                 }
 
                 if (loginError) {
-                    Text("Usuario o contraseña incorrectos", color = MaterialTheme.colorScheme.error)
+                    Text(
+                        "Usuario o contraseña incorrectos",
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
 
                 TextButton(onClick = { navigator.push(RegisterScreen()) }) {
