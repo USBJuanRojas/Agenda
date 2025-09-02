@@ -37,14 +37,6 @@ class LoginScreen : Screen {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                /*
-                Button(onClick = { navigator.push(ViewScheduleScreen()) }) {
-                    Text("Ver Horario")
-                }
-
-                Button(onClick = { navigator.push(AddClassScreen()) }) {
-                    Text("Agregar Clase")
-                }*/
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(value = user, onValueChange = { user = it }, label = { Text("Usuario") })
                 OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") })
