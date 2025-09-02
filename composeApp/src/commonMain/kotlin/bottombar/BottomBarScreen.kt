@@ -20,6 +20,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.*
 import kotlinx.coroutines.launch
 import screens.AddClassScreen
+import screens.AddTaskScreen
 import screens.LoginScreen
 
 class BottomBarScreen : Screen {
@@ -143,6 +144,12 @@ class BottomBarScreen : Screen {
                                 if (tabNavigator.current == HomeTab) {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddClassScreen())
+                                    }) {
+                                        Icon(Icons.Default.Add, contentDescription = "Agregar")
+                                    }
+                                } else if (tabNavigator.current == TaskTab) {
+                                    FloatingActionButton(onClick = {
+                                        navigator.push(AddTaskScreen())
                                     }) {
                                         Icon(Icons.Default.Add, contentDescription = "Agregar")
                                     }
