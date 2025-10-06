@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import screens.AddClassScreen
 import screens.AddTaskScreen
 import screens.LoginScreen
+import modelo.Objlogin
 
 class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por defecto será HomeTab
 
@@ -49,6 +50,9 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+        //mostrar los diálogos del menú
+        val showProfileDialog = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        val showInfoDialog = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
         TabNavigator(initialTab) { // HomeTab por defecto
             val tabNavigator = LocalTabNavigator.current
@@ -76,6 +80,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                     selected = false,
                                     onClick = {
                                         scope.launch { drawerState.close() }
+                                        showProfileDialog.value = true
                                     },
                                     icon = {
                                         Icon(
@@ -89,6 +94,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                     selected = false,
                                     onClick = {
                                         scope.launch { drawerState.close() }
+                                        showInfoDialog.value = true
                                     },
                                     icon = {
                                         Icon(
@@ -101,6 +107,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                     label = { Text("Cerrar sesión") },
                                     selected = false,
                                     onClick = {
+                                        Objlogin.idUsu = ""
+                                        Objlogin.nomUsu = ""
+                                        Objlogin.apeUsu = ""
+                                        Objlogin.perfil = ""
                                         navigator.push(LoginScreen())
                                     },
                                     icon = {
@@ -178,6 +188,45 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                 CurrentTab()
                             }
                         )
+
+                        if (showProfileDialog.value) {
+                            androidx.compose.material3.AlertDialog(
+                                onDismissRequest = { showProfileDialog.value = false },
+                                confirmButton = {
+                                    androidx.compose.material3.TextButton(onClick = { showProfileDialog.value = false }) {
+                                        Text("Cerrar")
+                                    }
+                                },
+                                title = { Text("Perfil del usuario") },
+                                text = {
+                                    Text(
+                                        "Nombre: ${Objlogin.nomUsu}\n" +
+                                                "Apellido: ${Objlogin.apeUsu}\n" +
+                                                "Perfil: ${Objlogin.perfil}"
+                                    )
+                                }
+                            )
+                        }
+
+                        if (showInfoDialog.value) {
+                            androidx.compose.material3.AlertDialog(
+                                onDismissRequest = { showInfoDialog.value = false },
+                                confirmButton = {
+                                    androidx.compose.material3.TextButton(onClick = { showInfoDialog.value = false }) {
+                                        Text("Cerrar")
+                                    }
+                                },
+                                title = { Text("Información de la app") },
+                                text = {
+                                    Text(
+                                        "Versión: 2.0.3\n" +
+                                                "Desarrollado por: \n" +
+                                                "Nicolas Alvarado Soriano\n" +
+                                                "Juan Jose Rojas Nieto"
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
