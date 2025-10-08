@@ -41,6 +41,7 @@ import screens.AddClassScreen
 import screens.AddTaskScreen
 import screens.LoginScreen
 import modelo.Objlogin
+import screens.ListUsers
 
 class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por defecto será HomeTab
 
@@ -103,6 +104,21 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                         )
                                     }
                                 )
+                                if (Objlogin.perfil == "Administrador"){
+                                    NavigationDrawerItem(
+                                        label = { Text("Listar Usuarios") },
+                                        selected = false,
+                                        onClick = {
+                                            navigator.push(ListUsers())
+                                        },
+                                        icon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Person,
+                                                contentDescription = "Listar Usuarios"
+                                            )
+                                        }
+                                    )
+                                }
                                 NavigationDrawerItem(
                                     label = { Text("Cerrar sesión") },
                                     selected = false,
