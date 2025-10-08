@@ -41,6 +41,7 @@ import io.ktor.http.Parameters
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import modelo.User
 
 class EditUserScreen(private val user: User) : Screen {
 
