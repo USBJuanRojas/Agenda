@@ -4,9 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Clase(
-    val nombre: String,
-    val horaInicio: String,
-    val horaFin: String,
+    val id_clase: Int,
+    val nombre_clase: String,
+    val descripcion: String?, // nullable
+    val hora_inicio: String,
+    val hora_fin: String,
     val lugar: String,
-    val profesor: String
+    val profesor_nombre: String,
+    val profesor_apellido: String
 )
