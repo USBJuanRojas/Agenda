@@ -3,10 +3,9 @@ package modelo
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class tarea(
-    val nombre: String,
-    val apellido: String,
+data class Tarea(
+    val asunto: String,
+    val fechaEntrega: String,
     val correo: String,
-    val user: String,
-    val id_rol: Int
+    val id_clase: String
 )

@@ -3,10 +3,10 @@ package modelo
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class clase(
+data class Clase(
     val nombre: String,
-    val apellido: String,
-    val correo: String,
-    val user: String,
-    val id_rol: Int
+    val horaInicio: String,
+    val horaFin: String,
+    val lugar: String,
+    val profesor: String
 )
