@@ -113,11 +113,11 @@ class AddClassScreen : Screen {
                                         setBody(
                                             Parameters.build {
                                                 append("nombre_clase", className)
-                                                append("descripcion", description.toString())
-                                                append("hora_inicio", startTime.toString())
-                                                append("hora_fin", endTime.toString())
-                                                append("lugar", place.toString())
-                                                append("id_profesor", teacherId.toString())
+                                                append("descripcion", description)
+                                                append("hora_inicio", startTime)
+                                                append("hora_fin", endTime)
+                                                append("lugar", place)
+                                                append("id_profesor", teacherId)
                                             }.formUrlEncode()
                                         )
                                     }.bodyAsText()
