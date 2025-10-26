@@ -26,6 +26,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import modelo.Clase
 import modelo.Objlogin
+import screens.EditClassScreen
 import screens.LoginScreen
 
 object HomeTab : Tab {
@@ -83,7 +84,9 @@ object HomeTab : Tab {
             scope.launch {
                 val client = HttpClient()
                 try {
-                    val responseText = client.get("http://10.0.2.2/API/eliminarClase.php?id_clase=${clase.id_clase}").bodyAsText()
+                    val responseText =
+                        client.get("http://10.0.2.2/API/eliminarClase.php?id_clase=${clase.id_clase}")
+                            .bodyAsText()
                     val jsonResponse = json.parseToJsonElement(responseText).jsonObject
 
                     val status = jsonResponse["status"]?.jsonPrimitive?.content
@@ -128,9 +131,12 @@ object HomeTab : Tab {
                 when {
                     cargando -> {
                         item {
-                            CircularProgressIndicator(modifier = Modifier.fillMaxWidth().wrapContentWidth())
+                            CircularProgressIndicator(
+                                modifier = Modifier.fillMaxWidth().wrapContentWidth()
+                            )
                         }
                     }
+
                     error != null -> {
                         item {
                             Text(
@@ -141,6 +147,7 @@ object HomeTab : Tab {
                             )
                         }
                     }
+
                     clases.isEmpty() -> {
                         item {
                             Text(
@@ -150,6 +157,7 @@ object HomeTab : Tab {
                             )
                         }
                     }
+
                     else -> {
                         items(clases) { clase ->
                             Card(
@@ -157,7 +165,10 @@ object HomeTab : Tab {
                                 elevation = CardDefaults.cardElevation(4.dp)
                             ) {
                                 Column(Modifier.padding(16.dp)) {
-                                    Text(text = clase.nombre_clase, style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        text = clase.nombre_clase,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
                                     Text(text = "Hora: ${clase.hora_inicio} - ${clase.hora_fin}")
                                     Text(text = "Lugar: ${clase.lugar}")
                                     Text(text = "Profesor: ${clase.profesor_nombre} ${clase.profesor_apellido}")
@@ -166,7 +177,11 @@ object HomeTab : Tab {
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.End
                                     ) {
-                                        OutlinedButton(onClick = { /* Editar clase */ }) {
+                                        OutlinedButton(onClick = {
+                                            navigator.parent?.push(
+                                                EditClassScreen(clase)
+                                            )
+                                        }) {
                                             Text("Editar")
                                         }
                                         Spacer(modifier = Modifier.width(8.dp))
