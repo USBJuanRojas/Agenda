@@ -1,0 +1,4 @@
+Recibido: Array
+(
+    [user] => andresp
+)
