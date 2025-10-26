@@ -50,7 +50,7 @@ class RegisterScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var confirmPassword by remember { mutableStateOf("") }
-        var mensaje by remember { mutableStateOf("") }
+        var responseMessage by remember { mutableStateOf("") }
         val scope = rememberCoroutineScope()
 
         Scaffold(
@@ -99,26 +99,27 @@ class RegisterScreen : Screen {
                         scope.launch {
                             try {
                                 if (password != confirmPassword) {
-                                    mensaje = "Las contraseñas no coinciden"
+                                    responseMessage = "Las contraseñas no coinciden"
                                     return@launch
                                 }
                                 val client = HttpClient(CIO)
-                                val response: String = client.post("http://10.0.2.2/API/crearUsuario.php") {
-                                    contentType(ContentType.Application.FormUrlEncoded)
-                                    setBody(
-                                        Parameters.build {
-                                            append("nombre", name.toString())
-                                            append("apellido", lastName.toString())
-                                            append("correo", email.toString())
-                                            append("user", user.toString())
-                                            append("password", password.toString())
-                                        }.formUrlEncode()
-                                    )
-                                }.bodyAsText()
-                                mensaje = "Respuesta: $response"
+                                val response: String =
+                                    client.post("http://10.0.2.2/API/crearUsuario.php") {
+                                        contentType(ContentType.Application.FormUrlEncoded)
+                                        setBody(
+                                            Parameters.build {
+                                                append("nombre", name.toString())
+                                                append("apellido", lastName.toString())
+                                                append("correo", email.toString())
+                                                append("user", user.toString())
+                                                append("password", password.toString())
+                                            }.formUrlEncode()
+                                        )
+                                    }.bodyAsText()
+                                responseMessage = "Respuesta: $response"
                                 client.close()
                             } catch (e: Exception) {
-                                mensaje = "Error: ${e.message}"
+                                responseMessage = "Error: ${e.message}"
                             }
                         }
                     },
@@ -127,8 +128,8 @@ class RegisterScreen : Screen {
                     Text("Registrar")
                 }//cambios
 
-                if (mensaje.isNotEmpty()) {
-                    Text(mensaje, color = MaterialTheme.colorScheme.primary)
+                if (responseMessage.isNotEmpty()) {
+                    Text(responseMessage, color = MaterialTheme.colorScheme.primary)
                 }
                 TextButton(onClick = { navigator?.push(LoginScreen()) }) { Text("Cancelar") } //Por ahora se simula
             }

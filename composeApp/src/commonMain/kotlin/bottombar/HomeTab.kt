@@ -22,6 +22,8 @@ import io.ktor.client.statement.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import modelo.Clase
 import modelo.Objlogin
 import screens.LoginScreen
@@ -76,6 +78,30 @@ object HomeTab : Tab {
                 }
             }
         }
+
+        fun eliminarClase(clase: Clase) {
+            scope.launch {
+                val client = HttpClient()
+                try {
+                    val responseText = client.get("http://10.0.2.2/API/eliminarClase.php?id_clase=${clase.id_clase}").bodyAsText()
+                    val jsonResponse = json.parseToJsonElement(responseText).jsonObject
+
+                    val status = jsonResponse["status"]?.jsonPrimitive?.content
+                    val message = jsonResponse["message"]?.jsonPrimitive?.content ?: ""
+
+                    if (status == "success") {
+                        clases = clases.filterNot { it.id_clase == clase.id_clase }
+                    } else {
+                        error = "Error al eliminar: $message"
+                    }
+                } catch (e: Exception) {
+                    error = "Error de conexión: ${e.message}"
+                } finally {
+                    client.close()
+                }
+            }
+        }
+
 
         // Llamamos al cargar al inicio
         LaunchedEffect(Unit) { cargarClases() }
@@ -166,8 +192,7 @@ object HomeTab : Tab {
                     text = { Text("¿Seguro que deseas eliminar la clase ${claseDelete?.nombre_clase}?") },
                     confirmButton = {
                         TextButton(onClick = {
-                            // Aquí llamarías al endpoint de eliminación
-                            clases = clases.toMutableList().apply { remove(claseDelete) }
+                            claseDelete?.let { eliminarClase(it) }
                             showDialog = false
                         }) {
                             Text("Eliminar")
