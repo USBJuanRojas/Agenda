@@ -2,55 +2,40 @@ package screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.request.forms.submitForm
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.Parameters
-import io.ktor.http.contentType
-import io.ktor.http.formUrlEncode
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import modelo.Clase
-import modelo.User
 
 class EditClassScreen(private val clase: Clase) : Screen {
+
+    @Serializable
+    data class Profesor(
+        @SerialName("id_usuario") val id: String,
+        @SerialName("nombre_completo") val nombre: String,
+        val correo: String? = null
+    )
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
@@ -61,21 +46,50 @@ class EditClassScreen(private val clase: Clase) : Screen {
         var startTime by remember { mutableStateOf(clase.hora_inicio) }
         var endTime by remember { mutableStateOf(clase.hora_fin) }
         var place by remember { mutableStateOf(clase.lugar) }
-        var teacherId by remember { mutableStateOf(clase.id_profesor.toString()) }
-        val scope = rememberCoroutineScope()
-        val url = "http://10.0.2.2/API/modificarClase.php"
 
+        // 🔹 Profesores
+        var profesores by remember { mutableStateOf<List<Profesor>>(emptyList()) }
+        var selectedProfesor by remember { mutableStateOf<Profesor?>(null) }
+        var expanded by remember { mutableStateOf(false) }
+
+        val scope = rememberCoroutineScope()
         var cargando by remember { mutableStateOf(false) }
         var mensaje by remember { mutableStateOf<String?>(null) }
 
+        // 🔹 Cargar profesores
+        LaunchedEffect(Unit) {
+            try {
+                val client = HttpClient(CIO)
+                val response = client.get("http://10.0.2.2/API/listarProfesor.php")
+                val json = response.bodyAsText()
+
+                val parsed = Json {
+                    ignoreUnknownKeys = true
+                }.decodeFromString<List<Profesor>>(json)
+
+                profesores = parsed
+                selectedProfesor = parsed.find { it.id == clase.id_profesor.toString() }
+                client.close()
+            } catch (e: Exception) {
+                mensaje = "Error al cargar profesores: ${e.message}"
+            }
+        }
+
+        // 🔹 Editar clase
         fun editarClase() {
             scope.launch {
+                if (selectedProfesor == null) {
+                    mensaje = "Por favor selecciona un profesor antes de guardar."
+                    return@launch
+                }
+
                 cargando = true
                 mensaje = null
-                val client = HttpClient()
+                val client = HttpClient(CIO)
+
                 try {
                     val response = client.submitForm(
-                        url = url,
+                        url = "http://10.0.2.2/API/modificarClase.php",
                         formParameters = Parameters.build {
                             append("id_clase", id)
                             append("nombre_clase", className)
@@ -83,12 +97,13 @@ class EditClassScreen(private val clase: Clase) : Screen {
                             append("hora_inicio", startTime)
                             append("hora_fin", endTime)
                             append("lugar", place)
-                            append("id_profesor", teacherId) //falta validar de alguna forma el profesor
+                            append("id_profesor", selectedProfesor!!.id)
                         }
                     ).bodyAsText()
 
                     if (response.contains("true", ignoreCase = true)) {
                         mensaje = "Clase actualizada correctamente."
+                        navigator.push(BottomBarScreen())
                     } else {
                         mensaje = "Error al actualizar: $response"
                     }
@@ -99,7 +114,6 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     cargando = false
                 }
             }
-            navigator.push(BottomBarScreen())
         }
 
         Scaffold(
@@ -107,7 +121,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 TopAppBar(
                     title = { Text("Editar Clase") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(BottomBarScreen())}) {
+                        IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }
@@ -125,33 +139,62 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     value = className,
                     onValueChange = { className = it },
                     label = { Text("Nombre Clase") },
-                    modifier = Modifier.fillMaxWidth())
+                    modifier = Modifier.fillMaxWidth()
+                )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descripción")},
-                    modifier = Modifier.fillMaxWidth())
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 OutlinedTextField(
                     value = startTime,
                     onValueChange = { startTime = it },
-                    label = { Text("Tiempo Inicio") },
-                    modifier = Modifier.fillMaxWidth())
+                    label = { Text("Hora Inicio") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 OutlinedTextField(
                     value = endTime,
                     onValueChange = { endTime = it },
-                    label = { Text("Tiempo Fin") },
-                    modifier = Modifier.fillMaxWidth())
+                    label = { Text("Hora Fin") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 OutlinedTextField(
                     value = place,
                     onValueChange = { place = it },
                     label = { Text("Lugar") },
-                    modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(
-                    value = teacherId,//falta validar de alguna forma el profesor
-                    onValueChange = { teacherId = it },
-                    label = { Text("Profesor") },//falta validar de alguna forma el profesor
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth())
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // 🔹 Dropdown Profesores
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedProfesor?.nombre ?: "Seleccionar profesor",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Profesor") },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        profesores.forEach { profesor ->
+                            DropdownMenuItem(
+                                text = { Text(profesor.nombre) },
+                                onClick = {
+                                    selectedProfesor = profesor
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -169,7 +212,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 mensaje?.let {
                     Text(
                         text = it,
-                        color = if (it.contains("true", true))
+                        color = if (it.contains("correctamente", true))
                             MaterialTheme.colorScheme.primary
                         else
                             MaterialTheme.colorScheme.error

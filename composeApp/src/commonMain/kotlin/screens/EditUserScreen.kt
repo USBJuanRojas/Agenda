@@ -82,6 +82,7 @@ class EditUserScreen(private val user: User) : Screen {
 
                     if (response.contains("exito", ignoreCase = true)) {
                         mensaje = "Usuario actualizado correctamente."
+                        navigator.push(BottomBarScreen())
                     } else {
                         mensaje = "Error al actualizar: $response"
                     }
