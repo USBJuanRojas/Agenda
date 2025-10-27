@@ -87,7 +87,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         }
                     ).bodyAsText()
 
-                    if (response.contains("exito", ignoreCase = true)) {
+                    if (response.contains("true", ignoreCase = true)) {
                         mensaje = "Clase actualizada correctamente."
                     } else {
                         mensaje = "Error al actualizar: $response"

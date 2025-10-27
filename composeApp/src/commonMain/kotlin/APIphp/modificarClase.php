@@ -34,7 +34,7 @@ if (!$sql) {
 }
 
 // Asociar parámetros
-$sql->bind_param("ssssiii", $nombre_clase, $descripcion, $hora_inicio, $hora_fin, $lugar, $id_profesor, $id_clase);
+$sql->bind_param("sssssii", $nombre_clase, $descripcion, $hora_inicio, $hora_fin, $lugar, $id_profesor, $id_clase);
 
 // Ejecutar actualización
 if ($sql->execute()) {
