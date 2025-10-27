@@ -119,8 +119,16 @@ object HomeTab : Tab {
 
         // --- UI PRINCIPAL ---
         Scaffold(
-            // Eliminamos topBar interno para no chocar con el Scaffold del BottomBar
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+            topBar = {
+                TopAppBar(
+                    title = { Text("Horario de Clases") },
+                    navigationIcon = {
+                        IconButton(onClick = { navigator.push(LoginScreen()) }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                )
+            }
         ) { paddingValues ->
 
             LazyColumn(
