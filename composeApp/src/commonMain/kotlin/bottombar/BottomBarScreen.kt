@@ -186,13 +186,13 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                 }
                             },
                             floatingActionButton = {
-                                if (tabNavigator.current == HomeTab) {
+                                if (tabNavigator.current == HomeTab && Objlogin.perfil == "Administrador") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddClassScreen())
                                     }) {
                                         Icon(Icons.Default.Add, contentDescription = "Agregar")
                                     }
-                                } else if (tabNavigator.current == TaskTab) {
+                                } else if (tabNavigator.current == TaskTab && Objlogin.perfil == "Profesor" || Objlogin.perfil == "Administrador") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddTaskScreen())
                                     }) {
