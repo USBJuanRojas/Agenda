@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextAlign
@@ -55,7 +56,8 @@ object HomeTab : Tab {
         var claseDelete by remember { mutableStateOf<Clase?>(null) }
 
         val json = Json { ignoreUnknownKeys = true; isLenient = true }
-        val listarUrl = "http://10.0.2.2/API/obtenerClasesUsuario.php?id_usuario=${Objlogin.idUsu}"
+
+        // --- FUNCIONES ---
 
         fun cargarClases() {
             scope.launch {
@@ -63,13 +65,20 @@ object HomeTab : Tab {
                 error = null
                 val client = HttpClient()
                 try {
-                    val responseText: String = client.get(listarUrl).bodyAsText()
-                    val response = json.decodeFromString<ClasesResponse>(responseText)
-                    if (response.success && response.clases != null) {
-                        clases = response.clases
+                    val listarUrl = if (Objlogin.perfil == "Administrador") {
+                        "http://10.0.2.2/API/listarClase.php"
                     } else {
-                        clases = emptyList()
+                        "http://10.0.2.2/API/obtenerClasesUsuario.php?id_usuario=${Objlogin.idUsu}"
+                    }
+
+                    val responseText = client.get(listarUrl).bodyAsText()
+                    val response = json.decodeFromString<ClasesResponse>(responseText)
+
+                    clases = if (response.success && response.clases != null) {
+                        response.clases
+                    } else {
                         error = response.message ?: "No se encontraron clases"
+                        emptyList()
                     }
                 } catch (e: Exception) {
                     error = "Error de conexión: ${e.message}"
@@ -105,35 +114,36 @@ object HomeTab : Tab {
             }
         }
 
-
-        // Llamamos al cargar al inicio
+        // --- CARGA AUTOMÁTICA ---
         LaunchedEffect(Unit) { cargarClases() }
 
+        // --- UI PRINCIPAL ---
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Horario de Clases") },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.push(LoginScreen()) }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                        }
-                    }
-                )
-            }
-        ) { padding ->
+            // Eliminamos topBar interno para no chocar con el Scaffold del BottomBar
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        ) { paddingValues ->
+
             LazyColumn(
                 modifier = Modifier
-                    .padding(padding)
                     .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(
+                    top = paddingValues.calculateTopPadding(),
+                    bottom = paddingValues.calculateBottomPadding() + 100.dp
+                )
             ) {
                 when {
                     cargando -> {
                         item {
-                            CircularProgressIndicator(
-                                modifier = Modifier.fillMaxWidth().wrapContentWidth()
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 40.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         }
                     }
 
@@ -152,7 +162,9 @@ object HomeTab : Tab {
                         item {
                             Text(
                                 text = "No hay clases programadas",
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 32.dp),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -171,25 +183,35 @@ object HomeTab : Tab {
                                     )
                                     Text(text = "Hora: ${clase.hora_inicio} - ${clase.hora_fin}")
                                     Text(text = "Lugar: ${clase.lugar}")
-                                    Text(text = "Profesor: ${clase.profesor_nombre} ${clase.profesor_apellido}")
+                                    Text(
+                                        text = "Profesor: ${clase.profesor_nombre} ${clase.profesor_apellido}"
+                                    )
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.End
                                     ) {
-                                        OutlinedButton(onClick = {
-                                            navigator.parent?.push(
-                                                EditClassScreen(clase)
-                                            )
-                                        }) {
-                                            Text("Editar")
-                                        }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Button(onClick = {
-                                            claseDelete = clase
-                                            showDialog = true
-                                        }) {
-                                            Text("Eliminar")
+                                        if (Objlogin.perfil == "Administrador") {
+                                            OutlinedButton(onClick = {
+                                                navigator.parent?.push(
+                                                    EditClassScreen(clase)
+                                                )
+                                            }) {
+                                                Text("Editar")
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Button(onClick = {
+                                                claseDelete = clase
+                                                showDialog = true
+                                            }) {
+                                                Text("Eliminar")
+                                            }
+                                        } else if (Objlogin.perfil == "Profesor") {
+                                            Button(onClick = {
+                                                // Aquí puedes navegar a gestión de estudiantes
+                                            }) {
+                                                Text("Gestionar")
+                                            }
                                         }
                                     }
                                 }
@@ -199,12 +221,14 @@ object HomeTab : Tab {
                 }
             }
 
-            // Diálogo de confirmación de eliminación
+            // --- Diálogo de confirmación ---
             if (showDialog && claseDelete != null) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
                     title = { Text("Confirmar eliminación") },
-                    text = { Text("¿Seguro que deseas eliminar la clase ${claseDelete?.nombre_clase}?") },
+                    text = {
+                        Text("¿Seguro que deseas eliminar la clase ${claseDelete?.nombre_clase}?")
+                    },
                     confirmButton = {
                         TextButton(onClick = {
                             claseDelete?.let { eliminarClase(it) }
@@ -222,6 +246,8 @@ object HomeTab : Tab {
             }
         }
     }
+
+
 
     // Wrapper para deserialización
     @Serializable
