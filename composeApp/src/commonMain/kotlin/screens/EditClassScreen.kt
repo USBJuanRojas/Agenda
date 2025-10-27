@@ -99,6 +99,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     cargando = false
                 }
             }
+            navigator.push(BottomBarScreen())
         }
 
         Scaffold(
@@ -168,15 +169,12 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 mensaje?.let {
                     Text(
                         text = it,
-                        color = if (it.contains("exito", true))
+                        color = if (it.contains("true", true))
                             MaterialTheme.colorScheme.primary
                         else
                             MaterialTheme.colorScheme.error
                     )
                 }
-
-
-                TextButton(onClick = { navigator.push(BottomBarScreen()) }) { Text("Cancelar") } //Por ahora se simula
             }
         }
     }
