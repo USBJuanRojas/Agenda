@@ -29,6 +29,7 @@ import modelo.Clase
 import modelo.Objlogin
 import screens.EditClassScreen
 import screens.LoginScreen
+import screens.ManageStudentsClassScreen
 
 object HomeTab : Tab {
     override val options: TabOptions
@@ -216,7 +217,9 @@ object HomeTab : Tab {
                                             }
                                         } else if (Objlogin.perfil == "Profesor") {
                                             Button(onClick = {
-                                                // Aquí puedes navegar a gestión de estudiantes
+                                                navigator.parent?.push(
+                                                    ManageStudentsClassScreen(clase.id_clase)
+                                                )
                                             }) {
                                                 Text("Gestionar")
                                             }
