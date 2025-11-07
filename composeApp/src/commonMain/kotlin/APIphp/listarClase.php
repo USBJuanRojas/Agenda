@@ -12,7 +12,7 @@ if ($con->connect_error) {
 }
 
 $sql = "
-SELECT
+SELECT 
     c.id_clase,
     c.nombre_clase,
     c.descripcion,

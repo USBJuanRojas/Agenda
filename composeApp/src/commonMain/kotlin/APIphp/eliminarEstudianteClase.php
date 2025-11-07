@@ -19,24 +19,13 @@ if (!$id_usuario || !$id_clase) {
     exit();
 }
 
-// Evitar duplicados
-$check = $con->prepare("SELECT id_gestor FROM gestor_clases WHERE id_usuario = ? AND id_clase = ?");
-$check->bind_param("ii", $id_usuario, $id_clase);
-$check->execute();
-$result = $check->get_result();
-
-if ($result->num_rows > 0) {
-    echo json_encode(["status" => "error", "message" => "El estudiante ya está en esta clase"]);
-    exit();
-}
-
-$stmt = $con->prepare("INSERT INTO gestor_clases (id_usuario, id_clase) VALUES (?, ?)");
+$stmt = $con->prepare("DELETE FROM gestor_clases WHERE id_usuario = ? AND id_clase = ?");
 $stmt->bind_param("ii", $id_usuario, $id_clase);
 
 if ($stmt->execute()) {
-    echo json_encode(["status" => "success", "message" => "Estudiante agregado correctamente"]);
+    echo json_encode(["status" => "success", "message" => "Estudiante eliminado de la clase"]);
 } else {
-    echo json_encode(["status" => "error", "message" => "No se pudo agregar al estudiante"]);
+    echo json_encode(["status" => "error", "message" => "No se pudo eliminar al estudiante"]);
 }
 
 $stmt->close();

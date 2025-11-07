@@ -12,7 +12,7 @@ if ($con->connect_error) {
     exit();
 }
 // Consulta de usuarios
-$sql = "SELECT nombre, apellido, correo, user, id_rol FROM usuarios";
+$sql = "SELECT id_usuario, nombre, apellido, correo, user, id_rol FROM usuarios";
 $result = $con->query($sql);
 $usuarios = [];
 if ($result && $result->num_rows > 0) {
