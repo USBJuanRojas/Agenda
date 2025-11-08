@@ -188,7 +188,7 @@ class ListUsers : Screen {
                                         )
                                         Text("Nombre: ${u.nombre} ${u.apellido}")
                                         Text("Correo: ${u.correo}")
-                                        Text("Rol: ${u.id_rol}")
+                                        //Text("Rol: ${u.id_rol}")
 
                                         Row(
                                             modifier = Modifier
