@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
@@ -162,11 +163,11 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                     if (Objlogin.perfil == "Administrador") {
                                         NavigationBarItem(
                                             selected = tabNavigator.current == UsersTab,
-                                            onClick = { tabNavigator.current = UsersTab },
-                                            label = { Text(UsersTab.options.title) },
-                                            icon = {
-                                                UsersTab.options.icon?.let { Icon(it, null) }
-                                            }
+                                            onClick = {
+                                                navigator.push(ListUsers())
+                                            },
+                                            label = { Text("Usuarios") },
+                                            icon = { Icon(Icons.Default.People, contentDescription = null) }
                                         )
                                     }
                                     else {
