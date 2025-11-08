@@ -158,8 +158,8 @@ class AddTaskScreen : Screen {
 
                 OutlinedTextField(value = asunto, onValueChange = { asunto = it }, label = { Text("Asunto") })
                 OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") })
-                OutlinedTextField(value = fechaInicio, onValueChange = { fechaInicio = it }, label = { Text("Fecha Inicio (ej. 8-11)") })
-                OutlinedTextField(value = fechaFin, onValueChange = { fechaFin = it }, label = { Text("Fecha Fin (ej. 11-11)") })
+                OutlinedTextField(value = fechaInicio, onValueChange = { fechaInicio = it }, label = { Text("Fecha Inicio (DD/MM/YYYY)") })
+                OutlinedTextField(value = fechaFin, onValueChange = { fechaFin = it }, label = { Text("Fecha Fin (DD/MM/YYYY)") })
                 OutlinedTextField(value = observaciones, onValueChange = { observaciones = it }, label = { Text("Observaciones") })
 
                 Spacer(modifier = Modifier.height(16.dp))
