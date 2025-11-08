@@ -26,6 +26,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import modelo.Objlogin // Usa tu modelo actual de sesión
+import bottombar.TaskTab
 
 @Serializable
 data class Clase(
@@ -96,7 +97,7 @@ class AddTaskScreen : Screen {
 
                     responseStatus = "Respuesta: $response"
                     client.close()
-                    navigator.push(BottomBarScreen())
+                    navigator.push(BottomBarScreen(initialTab = TaskTab))
 
                 } catch (e: Exception) {
                     responseStatus = "Error: ${e.message}"
@@ -109,7 +110,7 @@ class AddTaskScreen : Screen {
                 TopAppBar(
                     title = { Text("Agregar Tarea") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
+                        IconButton(onClick = { navigator.push(BottomBarScreen(initialTab = TaskTab)) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }

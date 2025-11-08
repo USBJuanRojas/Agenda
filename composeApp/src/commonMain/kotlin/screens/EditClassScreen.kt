@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
+import bottombar.HomeTab
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -103,7 +104,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
 
                     if (response.contains("true", ignoreCase = true)) {
                         mensaje = "Clase actualizada correctamente."
-                        navigator.push(BottomBarScreen())
+                        navigator.push(BottomBarScreen(initialTab = HomeTab))
                     } else {
                         mensaje = "Error al actualizar: $response"
                     }
@@ -121,7 +122,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 TopAppBar(
                     title = { Text("Editar Clase") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
+                        IconButton(onClick = { navigator.push(BottomBarScreen(initialTab = HomeTab)) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }
