@@ -1,34 +1,13 @@
 package bottombar
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.style.TextAlign
@@ -37,9 +16,94 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import org.jjrn.Agenda.Tarea
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import modelo.Objlogin
 import screens.LoginScreen
 
+// MODELOS DE DATOS
+@Serializable
+data class Tarea(
+    val id_tarea: Int,
+    val asunto: String,
+    val descripcion: String,
+    val fecha_inicio: String,
+    val fecha_fin: String,
+    val observaciones: String,
+    val nombre_clase: String
+)
+
+@Serializable
+data class TareasResponse(
+    val success: Boolean,
+    val tareas: List<Tarea>? = null,
+    val message: String? = null
+)
+
+@Serializable
+data class Clase(
+    val id_clase: Int,
+    val nombre_clase: String
+)
+
+@Serializable
+data class ClasesResponse(
+    val success: Boolean,
+    val clases: List<Clase>? = null,
+    val message: String? = null
+)
+
+data class ClaseConTareas(
+    val nombreClase: String,
+    val tareas: List<Tarea>
+)
+
+// FUNCIÓN PARA CARGAR TAREAS POR CLASE
+suspend fun cargarTareasPorClase(idProfesor: Int): List<ClaseConTareas> {
+    val client = HttpClient()
+    val json = Json { ignoreUnknownKeys = true }
+    val listaFinal = mutableListOf<ClaseConTareas>()
+
+    try {
+        // 1️⃣ Obtener clases del profesor
+        val clasesUrl = "http://10.0.2.2/API/obtenerClasesUsuario.php?id_usuario=$idProfesor"
+        val clasesResponseText = client.get(clasesUrl).body<String>()
+        val clasesResponse = json.decodeFromString<ClasesResponse>(clasesResponseText)
+
+        if (clasesResponse.success && !clasesResponse.clases.isNullOrEmpty()) {
+            for (clase in clasesResponse.clases) {
+                // 2️⃣ Obtener tareas por clase
+                val tareasUrl = "http://10.0.2.2/API/obtererTareasClase.php?id_clase=${clase.id_clase}"
+                val tareasResponseText = client.get(tareasUrl).body<String>()
+                val tareasResponse = json.decodeFromString<TareasResponse>(tareasResponseText)
+
+                if (tareasResponse.success && !tareasResponse.tareas.isNullOrEmpty()) {
+                    listaFinal.add(
+                        ClaseConTareas(
+                            nombreClase = clase.nombre_clase,
+                            tareas = tareasResponse.tareas
+                        )
+                    )
+                } else {
+                    // Clase sin tareas
+                    listaFinal.add(ClaseConTareas(clase.nombre_clase, emptyList()))
+                }
+            }
+        }
+    } catch (e: Exception) {
+        println("Error cargando tareas: ${e.message}")
+    } finally {
+        client.close()
+    }
+
+    return listaFinal
+}
+
+// INTERFAZ PRINCIPAL
 object TaskTab : Tab {
     override val options: TabOptions
         @Composable
@@ -57,94 +121,125 @@ object TaskTab : Tab {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-
         val navigator = LocalNavigator.currentOrThrow
-        var showDialog by remember { mutableStateOf(false) }
-        var tareaDelete by remember { mutableStateOf<Tarea?>(null) }
-        var tareaEjemplo by remember {
-            mutableStateOf(
-                mutableListOf(
-                    Tarea("Matematicas", "5/09/2025", "Taller 4"),
-                    Tarea("Programacion", "4/09/2025", "Proyecto 2")
-                )
-            )
+        var cargando by remember { mutableStateOf(true) }
+        var error by remember { mutableStateOf<String?>(null) }
+        var clasesConTareas by remember { mutableStateOf<List<ClaseConTareas>>(emptyList()) }
+
+        val scope = rememberCoroutineScope()
+
+        fun recargarTareas() {
+            scope.launch {
+                cargando = true
+                error = null
+                try {
+                    clasesConTareas = cargarTareasPorClase(Objlogin.idUsu.toInt())
+                    if (clasesConTareas.isEmpty()) {
+                        error = "No tienes clases asignadas o no hay tareas registradas."
+                    }
+                } catch (e: Exception) {
+                    error = "Error de conexión: ${e.message}"
+                } finally {
+                    cargando = false
+                }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            recargarTareas()
         }
 
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Tareas Pendientes") },
+                    title = { Text("Tareas por Clase") },
                     navigationIcon = {
                         IconButton(onClick = { navigator.push(LoginScreen()) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        }
+                    },
+                    actions = {
+                        TextButton(onClick = { recargarTareas() }) {
+                            Text("Actualizar")
                         }
                     }
                 )
             }
         ) { padding ->
-            LazyColumn(
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                if (tareaEjemplo.isEmpty()) {
-                    item {
+            when {
+                cargando -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        verticalArrangement = Arrangement.Center
+                    ) {
                         Text(
-                            text = "No hay tareas pendientes",
+                            text = "Cargando tareas...",
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center
                         )
                     }
-                } else {
-                    items(tareaEjemplo) { tarea ->
-                        Card(
+                }
+
+                error != null -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = error ?: "",
                             modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(4.dp)
-                        ) {
-                            Column(Modifier.padding(16.dp)) {
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        clasesConTareas.forEach { claseConTareas ->
+                            item {
                                 Text(
-                                    text = tarea.clase,
-                                    style = MaterialTheme.typography.titleMedium
+                                    text = claseConTareas.nombreClase,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
-                                Text(text = "Fecha: ${tarea.fecha}")
-                                Text(text = "Lugar: ${tarea.nombre}")
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End
-                                ) {
-                                    OutlinedButton(onClick = {
-                                        //navigator.push()
-                                    }) {
-                                        Text(text = "Editar")
-                                    }
-                                    Button(onClick = {
-                                        tareaDelete = tarea
-                                        showDialog = true
-                                    }) {
-                                        Text(text = "Completada")
-                                    }
-                                }
                             }
-                            if (showDialog) {
-                                AlertDialog(
-                                    onDismissRequest = { showDialog = false },
-                                    title = { Text("¡Tarea Completada!") },
-                                    text = { Text("Se eliminará la tarea de ${tareaDelete?.clase} de la lista, confirmar?") },
-                                    confirmButton = {
-                                        TextButton(onClick = {
-                                            tareaEjemplo = tareaEjemplo.toMutableList()
-                                                .apply { remove(tareaDelete) }
-                                            showDialog = false
-                                        }) { Text("Confirmar") }
-                                    },
-                                    dismissButton = {
-                                        TextButton(onClick = { showDialog = false }) {
-                                            Text("Cancelar")
+
+                            if (claseConTareas.tareas.isEmpty()) {
+                                item {
+                                    Text(
+                                        text = "Sin tareas registradas.",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            } else {
+                                items(claseConTareas.tareas) { tarea ->
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        elevation = CardDefaults.cardElevation(4.dp)
+                                    ) {
+                                        Column(Modifier.padding(16.dp)) {
+                                            Text(
+                                                text = tarea.asunto,
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                            Text(text = "Descripción: ${tarea.descripcion}")
+                                            Text(text = "Inicio: ${tarea.fecha_inicio}")
+                                            Text(text = "Fin: ${tarea.fecha_fin}")
+                                            Text(text = "Observaciones: ${tarea.observaciones}")
                                         }
                                     }
-                                )
+                                }
                             }
                         }
                     }

@@ -104,7 +104,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                         )
                                     }
                                 )
-                                if (Objlogin.perfil == "Administrador"){
+                                /*if (Objlogin.perfil == "Administrador"){
                                     NavigationDrawerItem(
                                         label = { Text("Listar Usuarios") },
                                         selected = false,
@@ -118,7 +118,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                             )
                                         }
                                     )
-                                }
+                                }*/
                                 NavigationDrawerItem(
                                     label = { Text("Cerrar sesión") },
                                     selected = false,
@@ -159,14 +159,26 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             },
                             bottomBar = {
                                 NavigationBar {
-                                    NavigationBarItem(
-                                        selected = tabNavigator.current == TaskTab,
-                                        onClick = { tabNavigator.current = TaskTab },
-                                        label = { Text(TaskTab.options.title) },
-                                        icon = {
-                                            TaskTab.options.icon?.let { Icon(it, null) }
-                                        }
-                                    )
+                                    if (Objlogin.perfil == "Administrador") {
+                                        NavigationBarItem(
+                                            selected = tabNavigator.current == UsersTab,
+                                            onClick = { tabNavigator.current = UsersTab },
+                                            label = { Text(UsersTab.options.title) },
+                                            icon = {
+                                                UsersTab.options.icon?.let { Icon(it, null) }
+                                            }
+                                        )
+                                    }
+                                    else {
+                                        NavigationBarItem(
+                                            selected = tabNavigator.current == TaskTab,
+                                            onClick = { tabNavigator.current = TaskTab },
+                                            label = { Text(TaskTab.options.title) },
+                                            icon = {
+                                                TaskTab.options.icon?.let { Icon(it, null) }
+                                            }
+                                        )
+                                    }
                                     NavigationBarItem(
                                         selected = tabNavigator.current == HomeTab,
                                         onClick = { tabNavigator.current = HomeTab },
@@ -192,7 +204,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                     }) {
                                         Icon(Icons.Default.Add, contentDescription = "Agregar")
                                     }
-                                } else if (tabNavigator.current == TaskTab && Objlogin.perfil == "Profesor" || Objlogin.perfil == "Administrador") {
+                                } else if (tabNavigator.current == TaskTab && Objlogin.perfil == "Profesor") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddTaskScreen())
                                     }) {
@@ -235,7 +247,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                 title = { Text("Información de la app") },
                                 text = {
                                     Text(
-                                        "Versión: 2.0.3\n" +
+                                        "Versión: 2.0.5\n" +
                                                 "Desarrollado por: \n" +
                                                 "Nicolas Alvarado Soriano\n" +
                                                 "Juan Jose Rojas Nieto"
