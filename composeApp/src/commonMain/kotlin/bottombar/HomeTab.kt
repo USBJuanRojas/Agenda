@@ -38,7 +38,7 @@ object HomeTab : Tab {
             return remember {
                 TabOptions(
                     index = 0u,
-                    title = "Horario de Clases",
+                    title = if (Objlogin.perfil == "Administrador") {"Gestion de Clases"} else {"Horario de Clases"},
                     icon = icon
                 )
             }

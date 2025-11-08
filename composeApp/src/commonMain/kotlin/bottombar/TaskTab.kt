@@ -56,7 +56,7 @@ object TaskTab : Tab {
             return remember {
                 TabOptions(
                     index = 2u,
-                    title = "Tareas",
+                    title = if (Objlogin.perfil == "Profesor") {"Gestión de Tareas"} else {"Tareas por Clase"},
                     icon = icon
                 )
             }

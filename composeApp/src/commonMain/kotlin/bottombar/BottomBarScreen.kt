@@ -188,14 +188,16 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                             HomeTab.options.icon?.let { Icon(it, null) }
                                         }
                                     )
-                                    NavigationBarItem(
-                                        selected = tabNavigator.current == CalendarTab,
-                                        onClick = { tabNavigator.current = CalendarTab },
-                                        label = { Text(CalendarTab.options.title) },
-                                        icon = {
-                                            CalendarTab.options.icon?.let { Icon(it, null) }
-                                        }
-                                    )
+                                    if (Objlogin.perfil != "Administrador") {
+                                        NavigationBarItem(
+                                            selected = tabNavigator.current == CalendarTab,
+                                            onClick = { tabNavigator.current = CalendarTab },
+                                            label = { Text(CalendarTab.options.title) },
+                                            icon = {
+                                                CalendarTab.options.icon?.let { Icon(it, null) }
+                                            }
+                                        )
+                                    }
                                 }
                             },
                             floatingActionButton = {
