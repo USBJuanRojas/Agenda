@@ -10,7 +10,7 @@ data class Clase(
     val hora_inicio: String,
     val hora_fin: String,
     val lugar: String,
-    val id_profesor: Int,
-    val profesor_nombre: String,
-    val profesor_apellido: String
+    val id_profesor: Int?,
+    val profesor_nombre: String? = "",
+    val profesor_apellido: String? = ""
 )
