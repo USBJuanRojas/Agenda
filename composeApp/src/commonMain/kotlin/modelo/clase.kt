@@ -12,5 +12,6 @@ data class Clase(
     val lugar: String,
     val id_profesor: Int?,
     val profesor_nombre: String? = "",
-    val profesor_apellido: String? = ""
+    val profesor_apellido: String? = "",
+    var dias_semana: String? = null
 )

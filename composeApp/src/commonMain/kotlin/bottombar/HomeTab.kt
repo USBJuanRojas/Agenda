@@ -20,9 +20,11 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.contentType
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import modelo.Clase
@@ -81,6 +83,38 @@ object HomeTab : Tab {
                         error = response.message ?: "No se encontraron clases"
                         emptyList()
                     }
+
+                    if (clases.isNotEmpty()) {
+                        clases = clases.map { clase ->
+                            try {
+                                // Obtener horario de la clase
+                                val diasResponseText = client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
+                                    .bodyAsText()
+                                val diasArray = json.parseToJsonElement(diasResponseText).jsonArray
+
+                                if (diasArray.isEmpty()) {
+                                    // 🚀 Crear nuevo horario vacío si no existe
+                                    val createResponse = client.post("http://10.0.2.2/API/guardarHorarioClase.php") {
+                                        contentType(io.ktor.http.ContentType.Application.Json)
+                                        setBody("""{"id_clase": ${clase.id_clase}, "dias_semana": ""}""")
+                                    }.bodyAsText()
+
+                                    println("Horario creado para clase ${clase.id_clase}: $createResponse")
+
+                                    clase.copy(dias_semana = "")
+                                } else {
+                                    // ✅ Tomar el primer horario retornado
+                                    val diasObj = diasArray.first().jsonObject
+                                    val diasString = diasObj["dias_semana"]?.jsonPrimitive?.content ?: ""
+                                    clase.copy(dias_semana = diasString)
+                                }
+                            } catch (e: Exception) {
+                                println("Error al cargar horario de clase ${clase.id_clase}: ${e.message}")
+                                clase.copy(dias_semana = "")
+                            }
+                        }
+                    }
+
                 } catch (e: Exception) {
                     error = "Error de conexión: ${e.message}"
                 } finally {
@@ -89,6 +123,8 @@ object HomeTab : Tab {
                 }
             }
         }
+
+
 
         fun eliminarClase(clase: Clase) {
             scope.launch {
@@ -190,11 +226,34 @@ object HomeTab : Tab {
                                         text = clase.nombre_clase,
                                         style = MaterialTheme.typography.titleMedium
                                     )
+                                    val diasLegibles = when (clase.dias_semana) {
+                                        null, "", "0000000" -> "Sin días asignados"
+                                        else -> clase.dias_semana!!.map { c ->
+                                            when (c) {
+                                                'L' -> "Lunes"
+                                                'M' -> "Martes"
+                                                'X' -> "Miércoles"
+                                                'J' -> "Jueves"
+                                                'V' -> "Viernes"
+                                                'S' -> "Sábado"
+                                                'D' -> "Domingo"
+                                                else -> null
+                                            }
+                                        }.filterNotNull().joinToString(", ")
+                                    }
+
+                                    Text(text = "Días: $diasLegibles")
+
+
                                     Text(text = "Hora: ${clase.hora_inicio} - ${clase.hora_fin}")
                                     Text(text = "Lugar: ${clase.lugar}")
-                                    Text(
-                                        text = "Profesor: ${clase.profesor_nombre} ${clase.profesor_apellido}"
-                                    )
+
+                                        if (clase.profesor_nombre == null && clase.profesor_apellido == null) {
+                                            Text(text = "Profesor: Sin asignar")
+                                        } else {
+                                            Text(text = "Profesor: ${clase.profesor_nombre} ${clase.profesor_apellido}")
+                                        }
+
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),

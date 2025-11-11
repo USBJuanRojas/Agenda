@@ -1,15 +1,13 @@
 package screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
 import bottombar.HomeTab
@@ -26,6 +24,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import modelo.Clase
 
 class EditClassScreen(private val clase: Clase) : Screen {
@@ -41,6 +41,9 @@ class EditClassScreen(private val clase: Clase) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val scope = rememberCoroutineScope()
+
+        // 🔹 Datos iniciales de la clase
         var id by remember { mutableStateOf(clase.id_clase.toString()) }
         var className by remember { mutableStateOf(clase.nombre_clase) }
         var description by remember { mutableStateOf(clase.descripcion) }
@@ -53,30 +56,59 @@ class EditClassScreen(private val clase: Clase) : Screen {
         var selectedProfesor by remember { mutableStateOf<Profesor?>(null) }
         var expanded by remember { mutableStateOf(false) }
 
-        val scope = rememberCoroutineScope()
+        // 🔹 Horario
+        var idHorario by remember { mutableStateOf<Int?>(null) }
+
+        val diasSemana = listOf(
+            "L" to "Lun",
+            "M" to "Mar",
+            "X" to "Mie",
+            "J" to "Jue",
+            "V" to "Vie",
+            "S" to "Sáb",
+            "D" to "Dom"
+        )
+        val seleccionDias = remember { mutableStateMapOf<String, Boolean>() }
+        diasSemana.forEach { if (seleccionDias[it.first] == null) seleccionDias[it.first] = false }
+
         var cargando by remember { mutableStateOf(false) }
         var mensaje by remember { mutableStateOf<String?>(null) }
 
-        // 🔹 Cargar profesores
+        // 🔹 Cargar profesores y horario de la clase
         LaunchedEffect(Unit) {
+            val client = HttpClient(CIO)
             try {
-                val client = HttpClient(CIO)
-                val response = client.get("http://10.0.2.2/API/listarProfesor.php")
-                val json = response.bodyAsText()
+                // Profesores
+                val profesoresResponse = client.get("http://10.0.2.2/API/listarProfesor.php")
+                val parsedProfesores = Json { ignoreUnknownKeys = true }
+                    .decodeFromString<List<Profesor>>(profesoresResponse.bodyAsText())
+                profesores = parsedProfesores
+                selectedProfesor = parsedProfesores.find { it.id == clase.id_profesor.toString() }
 
-                val parsed = Json {
-                    ignoreUnknownKeys = true
-                }.decodeFromString<List<Profesor>>(json)
+                // Horario
+                val horarioResponse = client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
+                val horarios = Json { ignoreUnknownKeys = true }
+                    .parseToJsonElement(horarioResponse.bodyAsText())
+                    .jsonArray
 
-                profesores = parsed
-                selectedProfesor = parsed.find { it.id == clase.id_profesor.toString() }
-                client.close()
+                if (horarios.isNotEmpty()) {
+                    val horario = horarios[0].jsonObject
+                    idHorario = horario["id_horario"]?.toString()?.replace("\"", "")?.toIntOrNull()
+                    val dias = horario["dias_semana"]?.toString()?.replace("\"", "") ?: ""
+                    dias.forEach { letra ->
+                        if (seleccionDias.containsKey(letra.toString())) {
+                            seleccionDias[letra.toString()] = true
+                        }
+                    }
+                }
             } catch (e: Exception) {
-                mensaje = "Error al cargar profesores: ${e.message}"
+                mensaje = "Error al cargar datos: ${e.message}"
+            } finally {
+                client.close()
             }
         }
 
-        // 🔹 Editar clase
+        // 🔹 Función para editar clase y horario
         fun editarClase() {
             scope.launch {
                 if (selectedProfesor == null) {
@@ -89,7 +121,8 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 val client = HttpClient(CIO)
 
                 try {
-                    val response = client.submitForm(
+                    // --- 1️⃣ Editar datos principales de la clase ---
+                    val responseClase = client.submitForm(
                         url = "http://10.0.2.2/API/modificarClase.php",
                         formParameters = Parameters.build {
                             append("id_clase", id)
@@ -102,12 +135,37 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         }
                     ).bodyAsText()
 
-                    if (response.contains("true", ignoreCase = true)) {
-                        mensaje = "Clase actualizada correctamente."
-                        navigator.push(BottomBarScreen(initialTab = HomeTab))
-                    } else {
-                        mensaje = "Error al actualizar: $response"
+                    val jsonClase = Json.parseToJsonElement(responseClase).jsonObject
+                    val successClase = jsonClase["success"]?.toString()?.toBoolean() ?: false
+                    if (!successClase) {
+                        mensaje = "Error al editar clase: ${jsonClase["message"]}"
+                        cargando = false
+                        client.close()
+                        return@launch
                     }
+
+                    // --- 2️⃣ Editar horario ---
+                    val diasSeleccionados = seleccionDias.filterValues { it }.keys.joinToString("")
+                    if (diasSeleccionados.isNotEmpty() && idHorario != null) {
+                        val responseHorario = client.post("http://10.0.2.2/API/editarHorario.php") {
+                            contentType(ContentType.Application.Json)
+                            setBody("""{"id_horario": $idHorario, "dias_semana": "$diasSeleccionados"}""")
+                        }.bodyAsText()
+
+                        val jsonHorario = Json.parseToJsonElement(responseHorario).jsonObject
+                        val successHorario = jsonHorario["success"]?.toString()?.toBoolean() ?: false
+
+                        if (!successHorario) {
+                            mensaje = "Error al actualizar horario: ${jsonHorario["message"]}"
+                            cargando = false
+                            client.close()
+                            return@launch
+                        }
+                    }
+
+                    mensaje = "✅ Clase y horario actualizados correctamente."
+                    navigator.push(BottomBarScreen(initialTab = HomeTab))
+
                 } catch (e: Exception) {
                     mensaje = "Error de red: ${e.message}"
                 } finally {
@@ -117,6 +175,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
             }
         }
 
+        // 🔹 UI
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -193,6 +252,29 @@ class EditClassScreen(private val clase: Clase) : Screen {
                                     expanded = false
                                 }
                             )
+                        }
+                    }
+                }
+
+                // 🔹 Días de clase (interfaz legible)
+                Text("Días de clase:", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    diasSemana.forEach { (key, label) ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.toggleable(
+                                value = seleccionDias[key] ?: false,
+                                onValueChange = { seleccionDias[key] = it }
+                            )
+                        ) {
+                            Checkbox(
+                                checked = seleccionDias[key] ?: false,
+                                onCheckedChange = { seleccionDias[key] = it }
+                            )
+                            Text(label)
                         }
                     }
                 }
