@@ -8,48 +8,61 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
+import bottombar.HomeTab
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.http.content.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import modelo.Clase
 import modelo.SimulatedTimePicker
 
-@Serializable
-data class Profesor(
-    @SerialName("id_usuario") val id: String,
-    @SerialName("nombre_completo") val nombre: String,
-    val correo: String
-)
+class EditClassScreen(private val clase: Clase) : Screen {
 
-class AddClassScreen : Screen {
+    @Serializable
+    data class Profesor(
+        @SerialName("id_usuario") val id: String,
+        @SerialName("nombre_completo") val nombre: String,
+        val correo: String? = null
+    )
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val scope = rememberCoroutineScope()
 
-        var className by remember { mutableStateOf("") }
-        var description by remember { mutableStateOf("") }
-        var startTime by remember { mutableStateOf("") }
-        var endTime by remember { mutableStateOf("") }
-        var place by remember { mutableStateOf("") }
+        // 🔹 Datos iniciales de la clase
+        var id by remember { mutableStateOf(clase.id_clase.toString()) }
+        var className by remember { mutableStateOf(clase.nombre_clase) }
+        var description by remember { mutableStateOf(clase.descripcion) }
+        var startTime by remember { mutableStateOf(clase.hora_inicio) }
+        var endTime by remember { mutableStateOf(clase.hora_fin) }
+        var place by remember { mutableStateOf(clase.lugar) }
+        var diasOriginales by remember { mutableStateOf("") }
 
+
+        // 🔹 Profesores
         var profesores by remember { mutableStateOf<List<Profesor>>(emptyList()) }
         var selectedProfesor by remember { mutableStateOf<Profesor?>(null) }
         var expanded by remember { mutableStateOf(false) }
 
-        // ✅ Días seleccionados
+        // 🔹 Horario
+        var idHorario by remember { mutableStateOf<Int?>(null) }
+
         val diasSemana = listOf(
             "L" to "Lun",
             "M" to "Mar",
@@ -59,94 +72,126 @@ class AddClassScreen : Screen {
             "S" to "Sáb",
             "D" to "Dom"
         )
-
         val seleccionDias = remember { mutableStateMapOf<String, Boolean>() }
         diasSemana.forEach { if (seleccionDias[it.first] == null) seleccionDias[it.first] = false }
 
-        var responseStatus by remember { mutableStateOf("") }
-        val scope = rememberCoroutineScope()
+        var cargando by remember { mutableStateOf(false) }
+        var mensaje by remember { mutableStateOf<String?>(null) }
 
-        // Cargar profesores
+        // 🔹 Cargar profesores y horario de la clase
         LaunchedEffect(Unit) {
-            scope.launch {
-                try {
-                    val client = HttpClient(CIO)
-                    val response = client.get("http://10.0.2.2/API/listarProfesor.php")
-                    val json = response.bodyAsText()
-                    profesores = Json.decodeFromString(json)
-                    client.close()
-                } catch (e: Exception) {
-                    responseStatus = "Error cargando profesores: ${e.message}"
+            val client = HttpClient(CIO)
+            try {
+                // Profesores
+                val profesoresResponse = client.get("http://10.0.2.2/API/listarProfesor.php")
+                val parsedProfesores = Json { ignoreUnknownKeys = true }
+                    .decodeFromString<List<Profesor>>(profesoresResponse.bodyAsText())
+                profesores = parsedProfesores
+                selectedProfesor = parsedProfesores.find { it.id == clase.id_profesor.toString() }
+
+                // Horario
+                val horarioResponse = client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
+                val horarios = Json { ignoreUnknownKeys = true }
+                    .parseToJsonElement(horarioResponse.bodyAsText())
+                    .jsonArray
+
+                if (horarios.isNotEmpty()) {
+                    val horario = horarios[0].jsonObject
+                    idHorario = horario["id_horario"]?.toString()?.replace("\"", "")?.toIntOrNull()
+                    val dias = horario["dias_semana"]?.toString()?.replace("\"", "") ?: ""
+                    diasOriginales = dias // 👈 guardamos los días originales
+                    dias.forEach { letra ->
+                        if (seleccionDias.containsKey(letra.toString())) {
+                            seleccionDias[letra.toString()] = true
+                        }
+                    }
                 }
+
+            } catch (e: Exception) {
+                mensaje = "Error al cargar datos: ${e.message}"
+            } finally {
+                client.close()
             }
         }
 
-        fun createClass() {
+        // 🔹 Función para editar clase y horario
+        fun editarClase() {
             scope.launch {
+                if (selectedProfesor == null) {
+                    mensaje = "Por favor selecciona un profesor antes de guardar."
+                    return@launch
+                }
+
+                cargando = true
+                mensaje = null
+                val client = HttpClient(CIO)
+
                 try {
-                    val client = HttpClient(CIO)
+                    // --- 1️⃣ Editar datos principales de la clase ---
+                    val responseClase = client.submitForm(
+                        url = "http://10.0.2.2/API/modificarClase.php",
+                        formParameters = Parameters.build {
+                            append("id_clase", id)
+                            append("nombre_clase", className)
+                            append("descripcion", description)
+                            append("hora_inicio", startTime)
+                            append("hora_fin", endTime)
+                            append("lugar", place)
+                            append("id_profesor", selectedProfesor!!.id)
+                        }
+                    ).bodyAsText()
 
-                    // --- 1️⃣ Crear clase ---
-                    val responseClase = client.post("http://10.0.2.2/API/crearClase.php") {
-                        contentType(ContentType.Application.FormUrlEncoded)
-                        setBody(
-                            Parameters.build {
-                                append("nombre_clase", className)
-                                append("descripcion", description)
-                                append("hora_inicio", startTime)
-                                append("hora_fin", endTime)
-                                append("lugar", place)
-                                append("id_profesor", selectedProfesor!!.id)
-                            }.formUrlEncode()
-                        )
-                    }.bodyAsText()
-
-                    // Parsear respuesta
-                    val jsonResponse = Json.parseToJsonElement(responseClase).jsonObject
-                    val success = jsonResponse["success"]?.toString()?.toBoolean() ?: false
-
-                    if (!success) {
-                        responseStatus = "Error al crear clase: ${jsonResponse["message"]}"
+                    val jsonClase = Json.parseToJsonElement(responseClase).jsonObject
+                    val successClase = jsonClase["success"]?.toString()?.toBoolean() ?: false
+                    if (!successClase) {
+                        mensaje = "Error al editar clase: ${jsonClase["message"]}"
+                        cargando = false
                         client.close()
                         return@launch
                     }
 
-                    // Obtener id_clase de la respuesta
-                    val idClase = jsonResponse["id_clase"]?.toString()?.toIntOrNull()
-                    if (idClase == null) {
-                        responseStatus = "No se recibió el ID de la clase."
-                        client.close()
-                        return@launch
-                    }
-
-                    // --- 2️⃣ Crear horario (con los días seleccionados) ---
+                    // --- 2️⃣ Editar horario ---
                     val diasSeleccionados = diasSemana
                         .map { it.first }
                         .filter { seleccionDias[it] == true }
                         .joinToString("")
 
-                    val responseHorario = client.post("http://10.0.2.2/API/crearHorario.php") {
-                        contentType(ContentType.Application.Json)
-                        setBody("""{"id_clase": $idClase, "dias_semana": "$diasSeleccionados"}""")
-                    }.bodyAsText()
+                    if (diasSeleccionados.isNotEmpty() && idHorario != null && diasSeleccionados != diasOriginales) {
+                        val responseHorario = client.post("http://10.0.2.2/API/editarHorario.php") {
+                            contentType(ContentType.Application.Json)
+                            setBody("""{"id_horario": $idHorario, "dias_semana": "$diasSeleccionados"}""")
+                        }.bodyAsText()
 
-                    responseStatus = "✅ Clase y horario creados exitosamente.\n$responseHorario"
-                    client.close()
-                    navigator.push(BottomBarScreen())
+                        val jsonHorario = Json.parseToJsonElement(responseHorario).jsonObject
+                        val successHorario = jsonHorario["success"]?.toString()?.toBoolean() ?: false
+
+                        if (!successHorario) {
+                            mensaje = "Error al actualizar horario: ${jsonHorario["message"]}"
+                            cargando = false
+                            client.close()
+                            return@launch
+                        }
+                    }
+
+                    mensaje = "✅ Clase y horario actualizados correctamente."
+                    navigator.push(BottomBarScreen(initialTab = HomeTab))
 
                 } catch (e: Exception) {
-                    responseStatus = "Error: ${e.message}"
+                    mensaje = "Error de red: ${e.message}"
+                } finally {
+                    client.close()
+                    cargando = false
                 }
             }
         }
 
-
+        // 🔹 UI
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Agregar Clase") },
+                    title = { Text("Editar Clase") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
+                        IconButton(onClick = { navigator.push(BottomBarScreen(initialTab = HomeTab)) }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }
@@ -257,17 +302,28 @@ class AddClassScreen : Screen {
                         color = MaterialTheme.colorScheme.error
                     )
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
-                    onClick = { createClass() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Guardar")
+                if (cargando) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                } else {
+                    Button(
+                        onClick = { editarClase() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Guardar cambios")
+                    }
                 }
 
-                if (responseStatus.isNotEmpty()) {
-                    Text(responseStatus, color = MaterialTheme.colorScheme.primary)
+                mensaje?.let {
+                    Text(
+                        text = it,
+                        color = if (it.contains("correctamente", true))
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }

@@ -188,7 +188,16 @@ class ListUsers : Screen {
                                         )
                                         Text("Nombre: ${u.nombre} ${u.apellido}")
                                         Text("Correo: ${u.correo}")
-                                        Text("Rol: ${u.id_rol}")
+
+                                        val roles = listOf(
+                                            1 to "Administrador",
+                                            2 to "Profesor",
+                                            3 to "Estudiante"
+                                        )
+
+                                        val rolNombre = roles.find { it.first == u.id_rol }?.second ?: "Desconocido"
+
+                                        Text("Rol: $rolNombre")
 
                                         Row(
                                             modifier = Modifier

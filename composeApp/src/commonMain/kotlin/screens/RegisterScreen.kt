@@ -7,8 +7,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -24,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bottombar.BottomBarScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import io.ktor.client.HttpClient
@@ -50,12 +55,18 @@ class RegisterScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var confirmPassword by remember { mutableStateOf("") }
-        var mensaje by remember { mutableStateOf("") }
+        var responseMessage by remember { mutableStateOf("") }
         val scope = rememberCoroutineScope()
 
         Scaffold(
             topBar = {
-                TopAppBar(title = { Text("Regístrate") })
+                TopAppBar(title = { Text("Regístrate") },
+                    navigationIcon = {
+                        IconButton(onClick = { navigator?.push(LoginScreen()) }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        }
+                    }
+                )
             }
         ) { padding ->
             Column(
@@ -99,26 +110,28 @@ class RegisterScreen : Screen {
                         scope.launch {
                             try {
                                 if (password != confirmPassword) {
-                                    mensaje = "Las contraseñas no coinciden"
+                                    responseMessage = "Las contraseñas no coinciden"
                                     return@launch
                                 }
                                 val client = HttpClient(CIO)
-                                val response: String = client.post("http://10.0.2.2/API/crearUsuario.php") {
-                                    contentType(ContentType.Application.FormUrlEncoded)
-                                    setBody(
-                                        Parameters.build {
-                                            append("nombre", name.toString())
-                                            append("apellido", lastName.toString())
-                                            append("correo", email.toString())
-                                            append("user", user.toString())
-                                            append("password", password.toString())
-                                        }.formUrlEncode()
-                                    )
-                                }.bodyAsText()
-                                mensaje = "Respuesta: $response"
+                                val response: String =
+                                    client.post("http://10.0.2.2/API/crearUsuario.php") {
+                                        contentType(ContentType.Application.FormUrlEncoded)
+                                        setBody(
+                                            Parameters.build {
+                                                append("nombre", name.toString())
+                                                append("apellido", lastName.toString())
+                                                append("correo", email.toString())
+                                                append("user", user.toString())
+                                                append("password", password.toString())
+                                            }.formUrlEncode()
+                                        )
+                                    }.bodyAsText()
+                                responseMessage = "Respuesta: $response"
                                 client.close()
+                                navigator?.push(LoginScreen())
                             } catch (e: Exception) {
-                                mensaje = "Error: ${e.message}"
+                                responseMessage = "Error: ${e.message}"
                             }
                         }
                     },
@@ -127,10 +140,9 @@ class RegisterScreen : Screen {
                     Text("Registrar")
                 }//cambios
 
-                if (mensaje.isNotEmpty()) {
-                    Text(mensaje, color = MaterialTheme.colorScheme.primary)
+                if (responseMessage.isNotEmpty()) {
+                    Text(responseMessage, color = MaterialTheme.colorScheme.primary)
                 }
-                TextButton(onClick = { navigator?.push(LoginScreen()) }) { Text("Cancelar") } //Por ahora se simula
             }
         }
     }

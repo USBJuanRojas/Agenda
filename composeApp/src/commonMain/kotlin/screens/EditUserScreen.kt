@@ -13,7 +13,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -82,6 +84,7 @@ class EditUserScreen(private val user: User) : Screen {
 
                     if (response.contains("exito", ignoreCase = true)) {
                         mensaje = "Usuario actualizado correctamente."
+                        navigator.push(BottomBarScreen())
                     } else {
                         mensaje = "Error al actualizar: $response"
                     }
@@ -141,13 +144,44 @@ class EditUserScreen(private val user: User) : Screen {
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = rol,
-                    onValueChange = { rol = it },
-                    label = { Text("Rol (ID)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
+                //Dropdown de roles
+                val roles = listOf(
+                    "1" to "Administrador",
+                    "2" to "Profesor",
+                    "3" to "Estudiante"
                 )
+                var expandedRol by remember { mutableStateOf(false) }
+
+                ExposedDropdownMenuBox(
+                    expanded = expandedRol,
+                    onExpandedChange = { expandedRol = !expandedRol }
+                ) {
+                    OutlinedTextField(
+                        value = roles.find { it.first == rol }?.second ?: "Seleccionar rol",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Rol") },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expandedRol,
+                        onDismissRequest = { expandedRol = false }
+                    ) {
+                        roles.forEach { (id, nombre) ->
+                            DropdownMenuItem(
+                                text = { Text(nombre) },
+                                onClick = {
+                                    rol = id // Guarda el ID numérico que espera la API
+                                    expandedRol = false
+                                }
+                            )
+                        }
+                    }
+                }
+
 
                 if (cargando) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))

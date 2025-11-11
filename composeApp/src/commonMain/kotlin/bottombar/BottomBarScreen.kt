@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
@@ -104,7 +105,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                         )
                                     }
                                 )
-                                if (Objlogin.perfil == "Administrador"){
+                                /*if (Objlogin.perfil == "Administrador"){
                                     NavigationDrawerItem(
                                         label = { Text("Listar Usuarios") },
                                         selected = false,
@@ -118,7 +119,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                             )
                                         }
                                     )
-                                }
+                                }*/
                                 NavigationDrawerItem(
                                     label = { Text("Cerrar sesión") },
                                     selected = false,
@@ -159,14 +160,26 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             },
                             bottomBar = {
                                 NavigationBar {
-                                    NavigationBarItem(
-                                        selected = tabNavigator.current == TaskTab,
-                                        onClick = { tabNavigator.current = TaskTab },
-                                        label = { Text(TaskTab.options.title) },
-                                        icon = {
-                                            TaskTab.options.icon?.let { Icon(it, null) }
-                                        }
-                                    )
+                                    if (Objlogin.perfil == "Administrador") {
+                                        NavigationBarItem(
+                                            selected = tabNavigator.current == UsersTab,
+                                            onClick = {
+                                                navigator.push(ListUsers())
+                                            },
+                                            label = { Text("Usuarios") },
+                                            icon = { Icon(Icons.Default.People, contentDescription = null) }
+                                        )
+                                    }
+                                    else {
+                                        NavigationBarItem(
+                                            selected = tabNavigator.current == TaskTab,
+                                            onClick = { tabNavigator.current = TaskTab },
+                                            label = { Text(TaskTab.options.title) },
+                                            icon = {
+                                                TaskTab.options.icon?.let { Icon(it, null) }
+                                            }
+                                        )
+                                    }
                                     NavigationBarItem(
                                         selected = tabNavigator.current == HomeTab,
                                         onClick = { tabNavigator.current = HomeTab },
@@ -175,24 +188,26 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                             HomeTab.options.icon?.let { Icon(it, null) }
                                         }
                                     )
-                                    NavigationBarItem(
-                                        selected = tabNavigator.current == CalendarTab,
-                                        onClick = { tabNavigator.current = CalendarTab },
-                                        label = { Text(CalendarTab.options.title) },
-                                        icon = {
-                                            CalendarTab.options.icon?.let { Icon(it, null) }
-                                        }
-                                    )
+                                    if (Objlogin.perfil != "Administrador") {
+                                        NavigationBarItem(
+                                            selected = tabNavigator.current == CalendarTab,
+                                            onClick = { tabNavigator.current = CalendarTab },
+                                            label = { Text(CalendarTab.options.title) },
+                                            icon = {
+                                                CalendarTab.options.icon?.let { Icon(it, null) }
+                                            }
+                                        )
+                                    }
                                 }
                             },
                             floatingActionButton = {
-                                if (tabNavigator.current == HomeTab) {
+                                if (tabNavigator.current == HomeTab && Objlogin.perfil == "Administrador") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddClassScreen())
                                     }) {
                                         Icon(Icons.Default.Add, contentDescription = "Agregar")
                                     }
-                                } else if (tabNavigator.current == TaskTab) {
+                                } else if (tabNavigator.current == TaskTab && Objlogin.perfil == "Profesor") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddTaskScreen())
                                     }) {
@@ -235,7 +250,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                 title = { Text("Información de la app") },
                                 text = {
                                     Text(
-                                        "Versión: 2.0.3\n" +
+                                        "Versión: 2.0.5\n" +
                                                 "Desarrollado por: \n" +
                                                 "Nicolas Alvarado Soriano\n" +
                                                 "Juan Jose Rojas Nieto"
