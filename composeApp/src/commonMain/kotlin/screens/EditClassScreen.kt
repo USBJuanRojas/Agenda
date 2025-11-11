@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
 import bottombar.HomeTab
@@ -27,6 +28,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import modelo.Clase
+import modelo.SimulatedTimePicker
 
 class EditClassScreen(private val clase: Clase) : Screen {
 
@@ -50,6 +52,8 @@ class EditClassScreen(private val clase: Clase) : Screen {
         var startTime by remember { mutableStateOf(clase.hora_inicio) }
         var endTime by remember { mutableStateOf(clase.hora_fin) }
         var place by remember { mutableStateOf(clase.lugar) }
+        var diasOriginales by remember { mutableStateOf("") }
+
 
         // 🔹 Profesores
         var profesores by remember { mutableStateOf<List<Profesor>>(emptyList()) }
@@ -95,12 +99,14 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     val horario = horarios[0].jsonObject
                     idHorario = horario["id_horario"]?.toString()?.replace("\"", "")?.toIntOrNull()
                     val dias = horario["dias_semana"]?.toString()?.replace("\"", "") ?: ""
+                    diasOriginales = dias // 👈 guardamos los días originales
                     dias.forEach { letra ->
                         if (seleccionDias.containsKey(letra.toString())) {
                             seleccionDias[letra.toString()] = true
                         }
                     }
                 }
+
             } catch (e: Exception) {
                 mensaje = "Error al cargar datos: ${e.message}"
             } finally {
@@ -145,8 +151,12 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     }
 
                     // --- 2️⃣ Editar horario ---
-                    val diasSeleccionados = seleccionDias.filterValues { it }.keys.joinToString("")
-                    if (diasSeleccionados.isNotEmpty() && idHorario != null) {
+                    val diasSeleccionados = diasSemana
+                        .map { it.first }
+                        .filter { seleccionDias[it] == true }
+                        .joinToString("")
+
+                    if (diasSeleccionados.isNotEmpty() && idHorario != null && diasSeleccionados != diasOriginales) {
                         val responseHorario = client.post("http://10.0.2.2/API/editarHorario.php") {
                             contentType(ContentType.Application.Json)
                             setBody("""{"id_horario": $idHorario, "dias_semana": "$diasSeleccionados"}""")
@@ -207,18 +217,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     label = { Text("Descripción") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = startTime,
-                    onValueChange = { startTime = it },
-                    label = { Text("Hora Inicio") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = endTime,
-                    onValueChange = { endTime = it },
-                    label = { Text("Hora Fin") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+
                 OutlinedTextField(
                     value = place,
                     onValueChange = { place = it },
@@ -277,6 +276,31 @@ class EditClassScreen(private val clase: Clase) : Screen {
                             Text(label)
                         }
                     }
+                }
+
+                // --- Selectores de hora ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SimulatedTimePicker(
+                        label = "Hora de inicio",
+                        horaActual = startTime,
+                        onTimeSelected = { startTime = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                    SimulatedTimePicker(
+                        label = "Hora de fin",
+                        horaActual = endTime,
+                        onTimeSelected = { endTime = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                }
+                if (startTime.isNotEmpty() && endTime.isNotEmpty() && startTime >= endTime) {
+                    Text(
+                        "⚠️ La hora de fin debe ser posterior a la de inicio",
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

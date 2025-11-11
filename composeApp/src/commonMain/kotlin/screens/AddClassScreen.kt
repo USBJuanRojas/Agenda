@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
@@ -23,6 +24,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
+import modelo.SimulatedTimePicker
 
 @Serializable
 data class Profesor(
@@ -118,7 +120,10 @@ class AddClassScreen : Screen {
                     }
 
                     // --- 2️⃣ Crear horario (con los días seleccionados) ---
-                    val diasSeleccionados = seleccionDias.filterValues { it }.keys.joinToString("")
+                    val diasSeleccionados = diasSemana
+                        .map { it.first }
+                        .filter { seleccionDias[it] == true }
+                        .joinToString("")
 
                     val responseHorario = client.post("http://10.0.2.2/API/crearHorario.php") {
                         contentType(ContentType.Application.Json)
@@ -158,36 +163,30 @@ class AddClassScreen : Screen {
                 OutlinedTextField(
                     value = className,
                     onValueChange = { className = it },
-                    label = { Text("Nombre Clase") }
+                    label = { Text("Nombre Clase") },
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descripción") }
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = startTime,
-                    onValueChange = { startTime = it },
-                    label = { Text("Tiempo Inicio") }
-                )
-                OutlinedTextField(
-                    value = endTime,
-                    onValueChange = { endTime = it },
-                    label = { Text("Tiempo Fin") }
-                )
+
                 OutlinedTextField(
                     value = place,
                     onValueChange = { place = it },
-                    label = { Text("Lugar") }
+                    label = { Text("Lugar") },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                // --- Lista desplegable de profesores ---
+                // 🔹 Dropdown Profesores
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded }
                 ) {
                     OutlinedTextField(
-                        value = selectedProfesor?.nombre ?: "",
+                        value = selectedProfesor?.nombre ?: "Seleccionar profesor",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Profesor") },
@@ -195,16 +194,15 @@ class AddClassScreen : Screen {
                             .menuAnchor()
                             .fillMaxWidth()
                     )
-
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        profesores.forEach { prof ->
+                        profesores.forEach { profesor ->
                             DropdownMenuItem(
-                                text = { Text(prof.nombre) },
+                                text = { Text(profesor.nombre) },
                                 onClick = {
-                                    selectedProfesor = prof
+                                    selectedProfesor = profesor
                                     expanded = false
                                 }
                             )
@@ -212,29 +210,53 @@ class AddClassScreen : Screen {
                     }
                 }
 
-                // ✅ Sección de selección de días
+                // 🔹 Días de clase (interfaz legible)
                 Text("Días de clase:", style = MaterialTheme.typography.titleMedium)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    diasSemana.forEach { (clave, label) ->
+                    diasSemana.forEach { (key, label) ->
                         Column(
-                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.toggleable(
-                                value = seleccionDias[clave] ?: false,
-                                onValueChange = { seleccionDias[clave] = it }
+                                value = seleccionDias[key] ?: false,
+                                onValueChange = { seleccionDias[key] = it }
                             )
                         ) {
                             Checkbox(
-                                checked = seleccionDias[clave] ?: false,
-                                onCheckedChange = { seleccionDias[clave] = it }
+                                checked = seleccionDias[key] ?: false,
+                                onCheckedChange = { seleccionDias[key] = it }
                             )
                             Text(label)
                         }
                     }
                 }
 
+                // --- Selectores de hora ---
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SimulatedTimePicker(
+                        label = "Hora de inicio",
+                        horaActual = startTime,
+                        onTimeSelected = { startTime = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                    SimulatedTimePicker(
+                        label = "Hora de fin",
+                        horaActual = endTime,
+                        onTimeSelected = { endTime = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                }
+                if (startTime.isNotEmpty() && endTime.isNotEmpty() && startTime >= endTime) {
+                    Text(
+                        "⚠️ La hora de fin debe ser posterior a la de inicio",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
