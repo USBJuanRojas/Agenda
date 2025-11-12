@@ -25,8 +25,12 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import modelo.Clase
 import modelo.SimulatedTimePicker
 
@@ -72,6 +76,17 @@ class EditClassScreen(private val clase: Clase) : Screen {
             "S" to "Sáb",
             "D" to "Dom"
         )
+
+        val diasMap = mapOf(
+            'L' to "Lunes",
+            'M' to "Martes",
+            'X' to "Miércoles",
+            'J' to "Jueves",
+            'V' to "Viernes",
+            'S' to "Sábado",
+            'D' to "Domingo"
+        )
+
         val seleccionDias = remember { mutableStateMapOf<String, Boolean>() }
         diasSemana.forEach { if (seleccionDias[it.first] == null) seleccionDias[it.first] = false }
 
@@ -90,7 +105,8 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 selectedProfesor = parsedProfesores.find { it.id == clase.id_profesor.toString() }
 
                 // Horario
-                val horarioResponse = client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
+                val horarioResponse =
+                    client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
                 val horarios = Json { ignoreUnknownKeys = true }
                     .parseToJsonElement(horarioResponse.bodyAsText())
                     .jsonArray
@@ -150,20 +166,82 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         return@launch
                     }
 
-                    // --- 2️⃣ Editar horario ---
+                    // --- 2️⃣ Validar y editar horario ---
                     val diasSeleccionados = diasSemana
                         .map { it.first }
                         .filter { seleccionDias[it] == true }
                         .joinToString("")
 
                     if (diasSeleccionados.isNotEmpty() && idHorario != null && diasSeleccionados != diasOriginales) {
+
+                        // ✅ Primero validar horario con API
+                        val bodyValidacion = buildJsonObject {
+                            put("id_profesor", JsonPrimitive(selectedProfesor!!.id))
+                            put("dias_semana", JsonPrimitive(diasSeleccionados))
+                            put("hora_inicio", JsonPrimitive(startTime))
+                            put("hora_fin", JsonPrimitive(endTime))
+                            put("id_clase", JsonPrimitive(id.toInt()))
+                        }
+
+                        val responseVal =
+                            client.post("http://10.0.2.2/API/validarHorarioClaseProfesor.php") {
+                                contentType(ContentType.Application.Json)
+                                setBody(
+                                    """
+                    {
+                        "id_profesor": ${selectedProfesor!!.id},
+                        "dias_semana": "$diasSeleccionados",
+                        "hora_inicio": "$startTime",
+                        "hora_fin": "$endTime"
+                    }
+                    """.trimIndent()
+                                )
+                            }.bodyAsText()
+
+                        val jsonVal = Json.parseToJsonElement(responseVal).jsonObject
+
+                        if (jsonVal["success"]?.jsonPrimitive?.boolean == false) {
+                            val alerta =
+                                jsonVal["message"]?.jsonPrimitive?.content ?: "Conflicto detectado"
+                            val conflictosArray = jsonVal["conflictos"]?.jsonArray
+
+                            var detalleConflictos = ""
+
+                            if (conflictosArray != null && conflictosArray.isNotEmpty()) {
+                                for (conflicto in conflictosArray) {
+                                    val obj = conflicto.jsonObject
+                                    val nombreClase =
+                                        obj["nombre_clase"]?.jsonPrimitive?.content ?: "Sin nombre"
+                                    val dias = obj["dias_semana"]?.jsonPrimitive?.content ?: "N/A"
+                                    val inicio = obj["hora_inicio"]?.jsonPrimitive?.content ?: "N/A"
+                                    val fin = obj["hora_fin"]?.jsonPrimitive?.content ?: "N/A"
+
+                                    val diasLegibles =
+                                        dias.mapNotNull { diasMap[it] }.joinToString(" - ")
+
+                                    detalleConflictos += "\n📘 $nombreClase ($diasLegibles) $inicio - $fin"
+                                }
+                            }
+
+                            mensaje = "❌ $alerta$detalleConflictos"
+                            client.close()
+                            return@launch
+                        }
+
+                        // ✅ Si no hay conflicto, actualizamos el horario
                         val responseHorario = client.post("http://10.0.2.2/API/editarHorario.php") {
                             contentType(ContentType.Application.Json)
-                            setBody("""{"id_horario": $idHorario, "dias_semana": "$diasSeleccionados"}""")
+                            setBody(
+                                """{
+                            "id_horario": $idHorario,
+                            "dias_semana": "$diasSeleccionados"
+                        }""".trimIndent()
+                            )
                         }.bodyAsText()
 
                         val jsonHorario = Json.parseToJsonElement(responseHorario).jsonObject
-                        val successHorario = jsonHorario["success"]?.toString()?.toBoolean() ?: false
+                        val successHorario =
+                            jsonHorario["success"]?.toString()?.toBoolean() ?: false
 
                         if (!successHorario) {
                             mensaje = "Error al actualizar horario: ${jsonHorario["message"]}"
@@ -173,6 +251,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         }
                     }
 
+                    // --- 3️⃣ Finalización ---
                     mensaje = "✅ Clase y horario actualizados correctamente."
                     navigator.push(BottomBarScreen(initialTab = HomeTab))
 

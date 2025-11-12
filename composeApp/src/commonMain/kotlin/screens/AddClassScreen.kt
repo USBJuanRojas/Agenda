@@ -23,7 +23,13 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import modelo.SimulatedTimePicker
 
 @Serializable
@@ -59,6 +65,15 @@ class AddClassScreen : Screen {
             "S" to "Sáb",
             "D" to "Dom"
         )
+        val diasMap = mapOf(
+            'L' to "Lunes",
+            'M' to "Martes",
+            'X' to "Miércoles",
+            'J' to "Jueves",
+            'V' to "Viernes",
+            'S' to "Sábado",
+            'D' to "Domingo"
+        )
 
         val seleccionDias = remember { mutableStateMapOf<String, Boolean>() }
         diasSemana.forEach { if (seleccionDias[it.first] == null) seleccionDias[it.first] = false }
@@ -86,7 +101,54 @@ class AddClassScreen : Screen {
                 try {
                     val client = HttpClient(CIO)
 
-                    // --- 1️⃣ Crear clase ---
+                    val diasSeleccionados = diasSemana
+                        .map { it.first }
+                        .filter { seleccionDias[it] == true }
+                        .joinToString("")
+
+                    // --- 1️⃣ Validar conflicto de horarios (profesor) ---
+                    val responseValProf = client.post("http://10.0.2.2/API/validarHorarioClaseProfesor.php") {
+                        contentType(ContentType.Application.Json)
+                        setBody(
+                            """
+                    {
+                        "id_profesor": ${selectedProfesor!!.id},
+                        "dias_semana": "$diasSeleccionados",
+                        "hora_inicio": "$startTime",
+                        "hora_fin": "$endTime"
+                    }
+                    """.trimIndent()
+                        )
+                    }.bodyAsText()
+
+                    val resValProf = Json.parseToJsonElement(responseValProf).jsonObject
+
+                    if (resValProf["success"]?.jsonPrimitive?.boolean == false) {
+                        val mensaje = resValProf["message"]?.jsonPrimitive?.content ?: "Conflicto detectado"
+                        val conflictosArray = resValProf["conflictos"]?.jsonArray
+
+                        var detalleConflictos = ""
+
+                        if (conflictosArray != null && conflictosArray.isNotEmpty()) {
+                            for (conflicto in conflictosArray) {
+                                val obj = conflicto.jsonObject
+                                val nombreClase = obj["nombre_clase"]?.jsonPrimitive?.content ?: "Sin nombre"
+                                val dias = obj["dias_semana"]?.jsonPrimitive?.content ?: "N/A"
+                                val inicio = obj["hora_inicio"]?.jsonPrimitive?.content ?: "N/A"
+                                val fin = obj["hora_fin"]?.jsonPrimitive?.content ?: "N/A"
+
+                                val diasLegibles = dias.mapNotNull { diasMap[it] }.joinToString(" - ")
+
+                                detalleConflictos += "\n📘 $nombreClase ($diasLegibles) $inicio - $fin"
+                            }
+                        }
+
+                        responseStatus = "❌ $mensaje$detalleConflictos"
+                        client.close()
+                        return@launch
+                    }
+
+                    // --- 2️⃣ Crear clase ---
                     val responseClase = client.post("http://10.0.2.2/API/crearClase.php") {
                         contentType(ContentType.Application.FormUrlEncoded)
                         setBody(
@@ -96,38 +158,36 @@ class AddClassScreen : Screen {
                                 append("hora_inicio", startTime)
                                 append("hora_fin", endTime)
                                 append("lugar", place)
-                                append("id_profesor", selectedProfesor!!.id)
+                                append("id_profesor", selectedProfesor!!.id.toString())
                             }.formUrlEncode()
                         )
                     }.bodyAsText()
 
-                    // Parsear respuesta
                     val jsonResponse = Json.parseToJsonElement(responseClase).jsonObject
-                    val success = jsonResponse["success"]?.toString()?.toBoolean() ?: false
+                    val success = jsonResponse["success"]?.jsonPrimitive?.boolean ?: false
 
                     if (!success) {
-                        responseStatus = "Error al crear clase: ${jsonResponse["message"]}"
+                        responseStatus = "❌ Error al crear clase: ${jsonResponse["message"]}"
                         client.close()
                         return@launch
                     }
 
-                    // Obtener id_clase de la respuesta
-                    val idClase = jsonResponse["id_clase"]?.toString()?.toIntOrNull()
+                    val idClase = jsonResponse["id_clase"]?.jsonPrimitive?.int
                     if (idClase == null) {
-                        responseStatus = "No se recibió el ID de la clase."
+                        responseStatus = "⚠️ No se recibió el ID de la clase."
                         client.close()
                         return@launch
                     }
 
-                    // --- 2️⃣ Crear horario (con los días seleccionados) ---
-                    val diasSeleccionados = diasSemana
-                        .map { it.first }
-                        .filter { seleccionDias[it] == true }
-                        .joinToString("")
+                    // --- 3️⃣ Crear horario ---
+                    val bodyHorario = buildJsonObject {
+                        put("id_clase", JsonPrimitive(idClase))
+                        put("dias_semana", JsonPrimitive(diasSeleccionados))
+                    }
 
                     val responseHorario = client.post("http://10.0.2.2/API/crearHorario.php") {
                         contentType(ContentType.Application.Json)
-                        setBody("""{"id_clase": $idClase, "dias_semana": "$diasSeleccionados"}""")
+                        setBody(bodyHorario.toString())
                     }.bodyAsText()
 
                     responseStatus = "✅ Clase y horario creados exitosamente.\n$responseHorario"
@@ -139,6 +199,8 @@ class AddClassScreen : Screen {
                 }
             }
         }
+
+
 
 
         Scaffold(
