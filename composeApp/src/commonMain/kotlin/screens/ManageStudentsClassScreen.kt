@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,10 +24,15 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.statement.*
 import io.ktor.http.Parameters
+import io.ktor.http.contentType
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import modelo.User
 
 
@@ -85,8 +91,37 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
                 cargando = true
                 val client = HttpClient()
                 try {
+                    // 1️⃣ Obtener datos de la clase actual (a la que se va a matricular)
+                    val claseTxt = client.get("$baseUrl/obtenerClaseEstudiante.php?id_clase=$idClase").bodyAsText()
+                    val claseJson = json.parseToJsonElement(claseTxt).jsonObject["data"]!!.jsonObject
+
+                    val dias = claseJson["dias_semana"]?.jsonPrimitive?.content ?: ""
+                    val horaInicio = claseJson["hora_inicio"]?.jsonPrimitive?.content ?: ""
+                    val horaFin = claseJson["hora_fin"]?.jsonPrimitive?.content ?: ""
+
+                    // 2️⃣ Validar horario antes de agregar
+                    val validarResponse = client.submitForm(
+                        url = "$baseUrl/validarHorarioClaseEstudiante.php",
+                        formParameters = Parameters.build {
+                            append("id_usuario", user.id_usuario.toString())
+                            append("id_clase_nueva", idClase.toString()) // NUEVA clase
+                            append("dias_semana", dias)
+                            append("hora_inicio", horaInicio)
+                            append("hora_fin", horaFin)
+                        }
+                    ).bodyAsText()
+
+                    val validarJson = json.parseToJsonElement(validarResponse).jsonObject
+                    if (validarJson["status"]?.jsonPrimitive?.content == "conflicto") {
+                        mensaje = validarJson["message"]?.jsonPrimitive?.content
+                        cargando = false
+                        client.close()
+                        return@launch
+                    }
+
+                    // 3️⃣ Si no hay conflicto, agregar el estudiante
                     val response = client.submitForm(
-                        url = agregarUrl,
+                        url = "$baseUrl/agregarEstudianteClase.php",
                         formParameters = Parameters.build {
                             append("id_usuario", user.id_usuario.toString())
                             append("id_clase", idClase.toString())
@@ -95,11 +130,12 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
 
                     val obj = json.parseToJsonElement(response).jsonObject
                     if (obj["status"]?.jsonPrimitive?.content == "success") {
-                        mensaje = "Estudiante agregado"
+                        mensaje = "Estudiante agregado correctamente"
                         cargarListas()
                     } else {
                         mensaje = obj["message"]?.jsonPrimitive?.content ?: "Error desconocido"
                     }
+
                 } catch (e: Exception) {
                     mensaje = "Error al agregar: ${e.message}"
                 } finally {
@@ -108,6 +144,8 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
                 }
             }
         }
+
+
 
         // Función: eliminar estudiante
         fun eliminar(user: User) {
