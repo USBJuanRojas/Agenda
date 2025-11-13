@@ -21,12 +21,21 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import modelo.Clase
 import modelo.SimulatedTimePicker
 
@@ -43,42 +52,36 @@ class EditClassScreen(private val clase: Clase) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val scope = rememberCoroutineScope()
 
-        // 🔹 Datos iniciales de la clase
-        var id by remember { mutableStateOf(clase.id_clase.toString()) }
+        // =============================
+        // 🔹 Estados
+        // =============================
         var className by remember { mutableStateOf(clase.nombre_clase) }
         var description by remember { mutableStateOf(clase.descripcion) }
+        var place by remember { mutableStateOf(clase.lugar) }
         var startTime by remember { mutableStateOf(clase.hora_inicio) }
         var endTime by remember { mutableStateOf(clase.hora_fin) }
-        var place by remember { mutableStateOf(clase.lugar) }
-        var diasOriginales by remember { mutableStateOf("") }
 
-
-        // 🔹 Profesores
         var profesores by remember { mutableStateOf<List<Profesor>>(emptyList()) }
         var selectedProfesor by remember { mutableStateOf<Profesor?>(null) }
         var expanded by remember { mutableStateOf(false) }
 
-        // 🔹 Horario
         var idHorario by remember { mutableStateOf<Int?>(null) }
 
         val diasSemana = listOf(
-            "L" to "Lun",
-            "M" to "Mar",
-            "X" to "Mie",
-            "J" to "Jue",
-            "V" to "Vie",
-            "S" to "Sáb",
-            "D" to "Dom"
+            "L" to "Lun", "M" to "Mar", "X" to "Mié",
+            "J" to "Jue", "V" to "Vie", "S" to "Sáb", "D" to "Dom"
         )
+
         val seleccionDias = remember { mutableStateMapOf<String, Boolean>() }
         diasSemana.forEach { if (seleccionDias[it.first] == null) seleccionDias[it.first] = false }
 
         var cargando by remember { mutableStateOf(false) }
         var mensaje by remember { mutableStateOf<String?>(null) }
 
-        // 🔹 Cargar profesores y horario de la clase
+        // =============================
+        // 🔹 Cargar profesores y horario
+        // =============================
         LaunchedEffect(Unit) {
             val client = HttpClient(CIO)
             try {
@@ -97,9 +100,9 @@ class EditClassScreen(private val clase: Clase) : Screen {
 
                 if (horarios.isNotEmpty()) {
                     val horario = horarios[0].jsonObject
-                    idHorario = horario["id_horario"]?.toString()?.replace("\"", "")?.toIntOrNull()
-                    val dias = horario["dias_semana"]?.toString()?.replace("\"", "") ?: ""
-                    diasOriginales = dias // 👈 guardamos los días originales
+                    idHorario = horario["id_horario"]?.jsonPrimitive?.intOrNull
+                    val dias = horario["dias_semana"]?.jsonPrimitive?.content ?: ""
+
                     dias.forEach { letra ->
                         if (seleccionDias.containsKey(letra.toString())) {
                             seleccionDias[letra.toString()] = true
@@ -114,78 +117,122 @@ class EditClassScreen(private val clase: Clase) : Screen {
             }
         }
 
-        // 🔹 Función para editar clase y horario
+        // ======================================================
+        // 🔹 Función: Editar clase con validación de horario
+        // ======================================================
         fun editarClase() {
-            scope.launch {
-                if (selectedProfesor == null) {
-                    mensaje = "Por favor selecciona un profesor antes de guardar."
-                    return@launch
-                }
+            val diasSeleccionados = seleccionDias.filter { it.value }.keys.joinToString("")
+            if (selectedProfesor == null) {
+                mensaje = "⚠️ Debes seleccionar un profesor"
+                return
+            }
+            if (diasSeleccionados.isEmpty()) {
+                mensaje = "⚠️ Debes seleccionar al menos un día"
+                return
+            }
 
-                cargando = true
-                mensaje = null
+            cargando = true
+            mensaje = null
+
+            CoroutineScope(Dispatchers.IO).launch {
                 val client = HttpClient(CIO)
+                var responseStatus = ""
 
                 try {
-                    // --- 1️⃣ Editar datos principales de la clase ---
-                    val responseClase = client.submitForm(
-                        url = "http://10.0.2.2/API/modificarClase.php",
-                        formParameters = Parameters.build {
-                            append("id_clase", id)
-                            append("nombre_clase", className)
-                            append("descripcion", description)
-                            append("hora_inicio", startTime)
-                            append("hora_fin", endTime)
-                            append("lugar", place)
-                            append("id_profesor", selectedProfesor!!.id)
-                        }
-                    ).bodyAsText()
+                    // 1️⃣ Validar horario del profesor
+                    val responseValProf = client.post("http://10.0.2.2/API/validarHorarioClaseProfesor.php") {
+                        contentType(ContentType.Application.Json)
+                        setBody(
+                            """
+                            {
+                                "id_profesor": ${selectedProfesor!!.id},
+                                "dias_semana": "$diasSeleccionados",
+                                "hora_inicio": "$startTime",
+                                "hora_fin": "$endTime",
+                                "id_clase": ${clase.id_clase}
+                            }
+                            """.trimIndent()
+                        )
+                    }.bodyAsText()
 
-                    val jsonClase = Json.parseToJsonElement(responseClase).jsonObject
-                    val successClase = jsonClase["success"]?.toString()?.toBoolean() ?: false
-                    if (!successClase) {
-                        mensaje = "Error al editar clase: ${jsonClase["message"]}"
-                        cargando = false
+                    val resValProf = Json.parseToJsonElement(responseValProf).jsonObject
+                    if (resValProf["success"]?.jsonPrimitive?.boolean == false) {
+                        val mensajeError = resValProf["message"]?.jsonPrimitive?.content ?: "Conflicto detectado"
+                        val conflictosArray = resValProf["conflictos"]?.jsonArray
+
+                        val diasMap = mapOf(
+                            'L' to "Lunes", 'M' to "Martes", 'X' to "Miércoles",
+                            'J' to "Jueves", 'V' to "Viernes", 'S' to "Sábado", 'D' to "Domingo"
+                        )
+
+                        var detalleConflictos = ""
+                        if (conflictosArray != null && conflictosArray.isNotEmpty()) {
+                            for (conflicto in conflictosArray) {
+                                val obj = conflicto.jsonObject
+                                val nombreClase = obj["nombre_clase"]?.jsonPrimitive?.content ?: "Sin nombre"
+                                val dias = obj["dias_semana"]?.jsonPrimitive?.content ?: "N/A"
+                                val horaInicio = obj["hora_inicio"]?.jsonPrimitive?.content ?: "N/A"
+                                val horaFin = obj["hora_fin"]?.jsonPrimitive?.content ?: "N/A"
+
+                                val diasLegibles = dias.mapNotNull { diasMap[it] }.joinToString(" - ")
+                                detalleConflictos += "\n📘 $nombreClase ($diasLegibles) $horaInicio - $horaFin"
+                            }
+                        }
+
+                        responseStatus = "❌ $mensajeError$detalleConflictos"
+                        withContext(Dispatchers.Main) {
+                            mensaje = responseStatus
+                            cargando = false
+                        }
                         client.close()
                         return@launch
                     }
 
-                    // --- 2️⃣ Editar horario ---
-                    val diasSeleccionados = diasSemana
-                        .map { it.first }
-                        .filter { seleccionDias[it] == true }
-                        .joinToString("")
-
-                    if (diasSeleccionados.isNotEmpty() && idHorario != null && diasSeleccionados != diasOriginales) {
-                        val responseHorario = client.post("http://10.0.2.2/API/editarHorario.php") {
-                            contentType(ContentType.Application.Json)
-                            setBody("""{"id_horario": $idHorario, "dias_semana": "$diasSeleccionados"}""")
-                        }.bodyAsText()
-
-                        val jsonHorario = Json.parseToJsonElement(responseHorario).jsonObject
-                        val successHorario = jsonHorario["success"]?.toString()?.toBoolean() ?: false
-
-                        if (!successHorario) {
-                            mensaje = "Error al actualizar horario: ${jsonHorario["message"]}"
-                            cargando = false
-                            client.close()
-                            return@launch
+                    // 2️⃣ Editar clase
+                    val responseClase = client.submitForm(
+                        url = "http://10.0.2.2/API/modificarClase.php",
+                        formParameters = Parameters.build {
+                            append("id_clase", clase.id_clase.toString())
+                            append("nombre_clase", className)
+                            append("descripcion", description)
+                            append("lugar", place)
+                            append("hora_inicio", startTime)
+                            append("hora_fin", endTime)
+                            append("id_profesor", selectedProfesor!!.id.toString())
                         }
-                    }
+                    ).bodyAsText()
 
-                    mensaje = "✅ Clase y horario actualizados correctamente."
-                    navigator.push(BottomBarScreen(initialTab = HomeTab))
+                    // 3️⃣ Actualizar horario
+                    val responseHorario = client.submitForm(
+                        url = "http://10.0.2.2/API/editarHorario.php",
+                        formParameters = Parameters.build {
+                            append("id_horario", idHorario.toString())
+                            append("dias_semana", diasSeleccionados)
+                        }
+                    ).bodyAsText()
+
+                    responseStatus =
+                        if ("success" in responseClase.lowercase() && "success" in responseHorario.lowercase()) {
+                            "✅ Clase actualizada correctamente"
+                        } else "⚠️ Hubo un problema al actualizar la clase"
 
                 } catch (e: Exception) {
-                    mensaje = "Error de red: ${e.message}"
+                    responseStatus = "⚠️ Error: ${e.message}"
                 } finally {
                     client.close()
+                    navigator.push(BottomBarScreen(initialTab = HomeTab))
+                }
+
+                withContext(Dispatchers.Main) {
+                    mensaje = responseStatus
                     cargando = false
                 }
             }
         }
 
-        // 🔹 UI
+        // =============================
+        // 🔹 Interfaz (UI)
+        // =============================
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -208,9 +255,10 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 OutlinedTextField(
                     value = className,
                     onValueChange = { className = it },
-                    label = { Text("Nombre Clase") },
+                    label = { Text("Nombre de la clase") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
@@ -225,24 +273,16 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // 🔹 Dropdown Profesores
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
+                // 🔹 Dropdown de profesores
+                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                     OutlinedTextField(
                         value = selectedProfesor?.nombre ?: "Seleccionar profesor",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Profesor") },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth()
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
+                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         profesores.forEach { profesor ->
                             DropdownMenuItem(
                                 text = { Text(profesor.nombre) },
@@ -255,20 +295,13 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     }
                 }
 
-                // 🔹 Días de clase (interfaz legible)
-                Text("Días de clase:", style = MaterialTheme.typography.titleMedium)
+                Text("Días de clase:")
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     diasSemana.forEach { (key, label) ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.toggleable(
-                                value = seleccionDias[key] ?: false,
-                                onValueChange = { seleccionDias[key] = it }
-                            )
-                        ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Checkbox(
                                 checked = seleccionDias[key] ?: false,
                                 onCheckedChange = { seleccionDias[key] = it }
@@ -278,40 +311,29 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     }
                 }
 
-                // --- Selectores de hora ---
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
                     SimulatedTimePicker(
-                        label = "Hora de inicio",
+                        label = "Inicio",
                         horaActual = startTime,
                         onTimeSelected = { startTime = it },
-                        modifier = Modifier.weight(1f).fillMaxWidth()
+                        modifier = Modifier.weight(1f)
                     )
                     SimulatedTimePicker(
-                        label = "Hora de fin",
+                        label = "Fin",
                         horaActual = endTime,
                         onTimeSelected = { endTime = it },
-                        modifier = Modifier.weight(1f).fillMaxWidth()
-                    )
-                }
-                if (startTime.isNotEmpty() && endTime.isNotEmpty() && startTime >= endTime) {
-                    Text(
-                        "⚠️ La hora de fin debe ser posterior a la de inicio",
-                        color = MaterialTheme.colorScheme.error
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                if (startTime >= endTime) {
+                    Text("⚠️ La hora de fin debe ser posterior", color = MaterialTheme.colorScheme.error)
+                }
 
                 if (cargando) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else {
-                    Button(
-                        onClick = { editarClase() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Button(onClick = { editarClase() }, modifier = Modifier.fillMaxWidth()) {
                         Text("Guardar cambios")
                     }
                 }
@@ -319,10 +341,8 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 mensaje?.let {
                     Text(
                         text = it,
-                        color = if (it.contains("correctamente", true))
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.error
+                        color = if (it.contains("✅")) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.error
                     )
                 }
             }

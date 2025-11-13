@@ -12,13 +12,13 @@ if ($con->connect_error) {
 }
 
 // Capturar datos (acepta POST o GET)
-$id_clase     = $_REQUEST['id_clase']     ?? '';
-$nombre_clase = $_REQUEST['nombre_clase'] ?? '';
-$descripcion  = $_REQUEST['descripcion']  ?? '';
-$hora_inicio  = $_REQUEST['hora_inicio']  ?? '';
-$hora_fin     = $_REQUEST['hora_fin']     ?? '';
-$lugar        = $_REQUEST['lugar']        ?? '';
-$id_profesor  = $_REQUEST['id_profesor']  ?? '';
+$id_clase     = $_POST['id_clase']     ?? '';
+$nombre_clase = $_POST['nombre_clase'] ?? '';
+$descripcion  = $_POST['descripcion']  ?? '';
+$hora_inicio  = $_POST['hora_inicio']  ?? '';
+$hora_fin     = $_POST['hora_fin']     ?? '';
+$lugar        = $_POST['lugar']        ?? '';
+$id_profesor  = $_POST['id_profesor']  ?? '';
 
 // Validar ID
 if (empty($id_clase) || !filter_var($id_clase, FILTER_VALIDATE_INT)) {

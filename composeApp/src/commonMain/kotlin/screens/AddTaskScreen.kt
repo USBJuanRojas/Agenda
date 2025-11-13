@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
@@ -27,6 +28,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import modelo.Objlogin // Usa tu modelo actual de sesión
 import bottombar.TaskTab
+import modelo.SimulatedDatePicker
+import modelo.SimulatedTimePicker
 
 @Serializable
 data class Clase(
@@ -45,9 +48,16 @@ class AddTaskScreen : Screen {
         // --- Campos de tarea ---
         var asunto by remember { mutableStateOf("") }
         var descripcion by remember { mutableStateOf("") }
-        var fechaInicio by remember { mutableStateOf("") }
-        var fechaFin by remember { mutableStateOf("") }
         var observaciones by remember { mutableStateOf("") }
+
+        //Tiempo
+        var fechaInicio by remember { mutableStateOf("") }
+        var startTime by remember { mutableStateOf("") }
+        var startDate by remember { mutableStateOf("") }
+        var fechaFin by remember { mutableStateOf("") }
+        var endTime by remember { mutableStateOf("") }
+        var endDate by remember { mutableStateOf("") }
+
 
         // --- Clases asociadas al profesor ---
         var clases by remember { mutableStateOf<List<Clase>>(emptyList()) }
@@ -105,6 +115,21 @@ class AddTaskScreen : Screen {
             }
         }
 
+        fun validarFechaHora(): Boolean {
+            if (startTime != "" && endTime != "" && startDate != "" && endDate != "") {
+                val startMinutes = startTime.split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+                val endMinutes = endTime.split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+
+                val isSameDay = startDate == endDate
+                val isInvalid =
+                    (isSameDay && startMinutes >= endMinutes) || // Mismo día → validar horas
+                            (!isSameDay && startDate > endDate)
+                return isInvalid
+            } else {
+                return false
+            }
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -156,11 +181,79 @@ class AddTaskScreen : Screen {
                     }
                 }
 
-                OutlinedTextField(value = asunto, onValueChange = { asunto = it }, label = { Text("Asunto") })
-                OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") })
-                OutlinedTextField(value = fechaInicio, onValueChange = { fechaInicio = it }, label = { Text("Fecha Inicio (DD/MM/YYYY)") })
-                OutlinedTextField(value = fechaFin, onValueChange = { fechaFin = it }, label = { Text("Fecha Fin (DD/MM/YYYY)") })
-                OutlinedTextField(value = observaciones, onValueChange = { observaciones = it }, label = { Text("Observaciones") })
+                OutlinedTextField(
+                    value = asunto,
+                    onValueChange = { asunto = it },
+                    label = { Text("Asunto") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = observaciones,
+                    onValueChange = { observaciones = it },
+                    label = { Text("Observaciones") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // --- Selectores de inicio ---
+                Text("Fecha de inicio")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SimulatedDatePicker(
+                        label = "Dia de inicio",
+                        fechaActual = startDate,
+                        onDateSelected = { startDate = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                    SimulatedTimePicker(
+                        label = "Hora de inicio",
+                        horaActual = startTime,
+                        onTimeSelected = { startTime = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                }
+
+                // --- Selectores de fin ---
+                Text("Fecha de fin")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SimulatedDatePicker(
+                        label = "Dia de fin",
+                        fechaActual = endDate,
+                        onDateSelected = { endDate = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                    SimulatedTimePicker(
+                        label = "Hora de fin",
+                        horaActual = endTime,
+                        onTimeSelected = { endTime = it },
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    )
+                }
+
+
+                fechaInicio = "${startDate}-${startTime}"
+                fechaFin = "${endDate}-${endTime}"
+
+                val isInvalid = validarFechaHora()
+
+                if (isInvalid) {
+                    Text(
+                        text = "⚠️ La fecha/hora de fin debe ser posterior a la de inicio",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
