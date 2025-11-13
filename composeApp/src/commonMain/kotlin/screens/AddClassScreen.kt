@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -269,20 +270,35 @@ class AddClassScreen : Screen {
                     value = className,
                     onValueChange = { className = it },
                     label = { Text("Nombre Clase") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = place,
                     onValueChange = { place = it },
                     label = { Text("Lugar") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 // 🔹 Dropdown Profesores
@@ -297,7 +313,12 @@ class AddClassScreen : Screen {
                         label = { Text("Profesor") },
                         modifier = Modifier
                             .menuAnchor()
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            cursorColor = Color.DarkGray,
+                            focusedIndicatorColor = Color(0xFFFF751F),
+                            focusedLabelColor = Color(0xFFFF751F)
+                        )
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,

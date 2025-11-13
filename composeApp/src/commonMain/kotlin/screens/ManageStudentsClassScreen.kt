@@ -229,7 +229,7 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
                         .padding(16.dp)
                 ) {
                     if (cargando) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFFFF751F))
                     }
 
                     mensaje?.let {

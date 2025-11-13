@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -293,21 +294,35 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     value = className,
                     onValueChange = { className = it },
                     label = { Text("Nombre de la clase") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = place,
                     onValueChange = { place = it },
                     label = { Text("Lugar") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 // 🔹 Dropdown de profesores
@@ -319,7 +334,12 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Profesor") },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            cursorColor = Color.DarkGray,
+                            focusedIndicatorColor = Color(0xFFFF751F),
+                            focusedLabelColor = Color(0xFFFF751F)
+                        )
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -378,7 +398,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 }
 
                 if (cargando) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFFFF751F))
                 } else {
                     Button(onClick = { editarClase() }, modifier = Modifier.fillMaxWidth()) {
                         Text("Guardar cambios")

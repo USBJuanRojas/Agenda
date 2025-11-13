@@ -171,7 +171,12 @@ class AddTaskScreen : Screen {
                         label = { Text("Clase") },
                         modifier = Modifier
                             .menuAnchor()
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            cursorColor = Color.DarkGray,
+                            focusedIndicatorColor = Color(0xFFFF751F),
+                            focusedLabelColor = Color(0xFFFF751F)
+                        )
                     )
 
                     ExposedDropdownMenu(
@@ -194,21 +199,36 @@ class AddTaskScreen : Screen {
                     value = asunto,
                     onValueChange = { asunto = it },
                     label = { Text("Asunto") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
                     label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = observaciones,
                     onValueChange = { observaciones = it },
                     label = { Text("Observaciones") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 // --- Selectores de inicio ---

@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -124,28 +125,48 @@ class EditUserScreen(private val user: User) : Screen {
                     value = nombre,
                     onValueChange = { nombre = it },
                     label = { Text("Nombre") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = apellido,
                     onValueChange = { apellido = it },
                     label = { Text("Apellido") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
                     label = { Text("Correo") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = usuario,
                     onValueChange = { usuario = it },
                     label = { Text("Usuario") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 //Dropdown de roles
@@ -188,7 +209,7 @@ class EditUserScreen(private val user: User) : Screen {
 
 
                 if (cargando) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFFFF751F),)
                 } else {
                     Button(
                         onClick = { editarUsuario() },

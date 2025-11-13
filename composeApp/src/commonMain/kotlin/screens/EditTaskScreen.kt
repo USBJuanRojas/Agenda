@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -145,21 +146,36 @@ class EditTaskScreen(private val tarea: Tarea) : Screen {
                     value = asunto,
                     onValueChange = { asunto = it },
                     label = { Text("Asunto") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
                     label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = observaciones,
                     onValueChange = { observaciones = it },
                     label = { Text("Observaciones") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 // --- Selectores de inicio ---
@@ -226,7 +242,7 @@ class EditTaskScreen(private val tarea: Tarea) : Screen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (cargando) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFFFF751F),)
                 } else {
                     Button(
                         onClick = { editarTarea() },
