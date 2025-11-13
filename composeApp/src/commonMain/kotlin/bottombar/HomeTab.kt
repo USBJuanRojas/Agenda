@@ -1,13 +1,42 @@
 package bottombar
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,9 +47,11 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.contentType
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -41,7 +72,11 @@ object HomeTab : Tab {
             return remember {
                 TabOptions(
                     index = 0u,
-                    title = if (Objlogin.perfil == "Administrador") {"Gestion de Clases"} else {"Horario de Clases"},
+                    title = if (Objlogin.perfil == "Administrador") {
+                        "Gestion de Clases"
+                    } else {
+                        "Horario de Clases"
+                    },
                     icon = icon
                 )
             }
@@ -89,16 +124,18 @@ object HomeTab : Tab {
                         clases = clases.map { clase ->
                             try {
                                 // Obtener horario de la clase
-                                val diasResponseText = client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
-                                    .bodyAsText()
+                                val diasResponseText =
+                                    client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
+                                        .bodyAsText()
                                 val diasArray = json.parseToJsonElement(diasResponseText).jsonArray
 
                                 if (diasArray.isEmpty()) {
                                     // 🚀 Crear nuevo horario vacío si no existe
-                                    val createResponse = client.post("http://10.0.2.2/API/guardarHorarioClase.php") {
-                                        contentType(io.ktor.http.ContentType.Application.Json)
-                                        setBody("""{"id_clase": ${clase.id_clase}, "dias_semana": ""}""")
-                                    }.bodyAsText()
+                                    val createResponse =
+                                        client.post("http://10.0.2.2/API/guardarHorarioClase.php") {
+                                            contentType(io.ktor.http.ContentType.Application.Json)
+                                            setBody("""{"id_clase": ${clase.id_clase}, "dias_semana": ""}""")
+                                        }.bodyAsText()
 
                                     println("Horario creado para clase ${clase.id_clase}: $createResponse")
 
@@ -106,7 +143,8 @@ object HomeTab : Tab {
                                 } else {
                                     // ✅ Tomar el primer horario retornado
                                     val diasObj = diasArray.first().jsonObject
-                                    val diasString = diasObj["dias_semana"]?.jsonPrimitive?.content ?: ""
+                                    val diasString =
+                                        diasObj["dias_semana"]?.jsonPrimitive?.content ?: ""
                                     clase.copy(dias_semana = diasString)
                                 }
                             } catch (e: Exception) {
@@ -124,7 +162,6 @@ object HomeTab : Tab {
                 }
             }
         }
-
 
 
         fun eliminarClase(clase: Clase) {
@@ -188,7 +225,7 @@ object HomeTab : Tab {
                                     .padding(top = 40.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(color = Color(0xFFFF751F),)
+                                CircularProgressIndicator(color = Color(0xFFFF751F))
                             }
                         }
                     }
@@ -249,11 +286,11 @@ object HomeTab : Tab {
                                     Text(text = "Hora: ${clase.hora_inicio} - ${clase.hora_fin}")
                                     Text(text = "Lugar: ${clase.lugar}")
 
-                                        if (clase.profesor_nombre == null && clase.profesor_apellido == null) {
-                                            Text(text = "Profesor: Sin asignar")
-                                        } else {
-                                            Text(text = "Profesor: ${clase.profesor_nombre} ${clase.profesor_apellido}")
-                                        }
+                                    if (clase.profesor_nombre == null && clase.profesor_apellido == null) {
+                                        Text(text = "Profesor: Sin asignar")
+                                    } else {
+                                        Text(text = "Profesor: ${clase.profesor_nombre} ${clase.profesor_apellido}")
+                                    }
 
 
                                     Row(
@@ -261,26 +298,40 @@ object HomeTab : Tab {
                                         horizontalArrangement = Arrangement.End
                                     ) {
                                         if (Objlogin.perfil == "Administrador") {
-                                            OutlinedButton(onClick = {
-                                                navigator.parent?.push(
-                                                    EditClassScreen(clase)
+                                            OutlinedButton(
+                                                onClick = {
+                                                    navigator.parent?.push(
+                                                        EditClassScreen(clase)
+                                                    )
+                                                }, colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color.Gray,
+                                                    contentColor = Color.White
                                                 )
-                                            }) {
+                                            ) {
                                                 Text("Editar")
                                             }
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Button(onClick = {
-                                                claseDelete = clase
-                                                showDialog = true
-                                            }) {
+                                            Button(
+                                                onClick = {
+                                                    claseDelete = clase
+                                                    showDialog = true
+                                                }, colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.error
+                                                )
+                                            ) {
                                                 Text("Eliminar")
                                             }
                                         } else if (Objlogin.perfil == "Profesor") {
-                                            Button(onClick = {
-                                                navigator.parent?.push(
-                                                    ManageStudentsClassScreen(clase.id_clase)
+                                            Button(
+                                                onClick = {
+                                                    navigator.parent?.push(
+                                                        ManageStudentsClassScreen(clase.id_clase)
+                                                    )
+                                                }, colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color.Gray,
+                                                    contentColor = Color.White
                                                 )
-                                            }) {
+                                            ) {
                                                 Text("Gestionar")
                                             }
                                         }
@@ -317,7 +368,6 @@ object HomeTab : Tab {
             }
         }
     }
-
 
 
     // Wrapper para deserialización

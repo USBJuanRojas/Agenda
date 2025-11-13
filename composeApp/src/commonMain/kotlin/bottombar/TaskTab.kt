@@ -1,13 +1,42 @@
 package bottombar
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,9 +47,9 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -57,7 +86,11 @@ object TaskTab : Tab {
             return remember {
                 TabOptions(
                     index = 2u,
-                    title = if (Objlogin.perfil == "Profesor") {"Gestión de Tareas"} else {"Tareas por Clase"},
+                    title = if (Objlogin.perfil == "Profesor") {
+                        "Gestión de Tareas"
+                    } else {
+                        "Tareas por Clase"
+                    },
                     icon = icon
                 )
             }
@@ -102,8 +135,13 @@ object TaskTab : Tab {
                         val mapaTemporal = mutableMapOf<Int, List<TareaSimple>>()
                         for (c in clases) {
                             try {
-                                val tareasText = client.get("http://10.0.2.2/API/obtenerTareasClase.php?id_clase=${c.id_clase}").bodyAsText()
-                                val tareasResp = json.decodeFromString(TareaResponseWrapper.serializer(), tareasText)
+                                val tareasText =
+                                    client.get("http://10.0.2.2/API/obtenerTareasClase.php?id_clase=${c.id_clase}")
+                                        .bodyAsText()
+                                val tareasResp = json.decodeFromString(
+                                    TareaResponseWrapper.serializer(),
+                                    tareasText
+                                )
                                 mapaTemporal[c.id_clase] = tareasResp.tareas ?: emptyList()
                             } catch (e: Exception) {
                                 // Si falla una clase, dejar lista vacía y continuar
@@ -132,15 +170,19 @@ object TaskTab : Tab {
             scope.launch {
                 val client = HttpClient()
                 try {
-                    val responseText = client.get("http://10.0.2.2/API/eliminarTarea.php?id_tarea=${tarea.id_tarea}").bodyAsText()
+                    val responseText =
+                        client.get("http://10.0.2.2/API/eliminarTarea.php?id_tarea=${tarea.id_tarea}")
+                            .bodyAsText()
                     val parsed = json.parseToJsonElement(responseText).jsonObject
                     val success = parsed["success"]?.jsonPrimitive?.booleanOrNull ?: false
-                    val message = parsed["message"]?.jsonPrimitive?.content ?: "Respuesta inesperada"
+                    val message =
+                        parsed["message"]?.jsonPrimitive?.content ?: "Respuesta inesperada"
 
                     if (success) {
                         // actualizar estado local
                         tareasPorClase = tareasPorClase.toMutableMap().also { map ->
-                            val lista = map[tarea.id_clase]?.filterNot { it.id_tarea == tarea.id_tarea }
+                            val lista =
+                                map[tarea.id_clase]?.filterNot { it.id_tarea == tarea.id_tarea }
                             map[tarea.id_clase] = lista ?: emptyList()
                         }
                     } else {
@@ -187,7 +229,7 @@ object TaskTab : Tab {
                                     .padding(top = 40.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(color = Color(0xFFFF751F),)
+                                CircularProgressIndicator(color = Color(0xFFFF751F))
                             }
                         }
                     }
@@ -222,7 +264,7 @@ object TaskTab : Tab {
                                 Text(
                                     text = clase.nombre_clase,
                                     style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = Color.Black
                                 )
 
                                 val tareasClase = tareasPorClase[clase.id_clase] ?: emptyList()
@@ -265,30 +307,40 @@ object TaskTab : Tab {
                                                     horizontalArrangement = Arrangement.End
                                                 ) {
                                                     if (Objlogin.perfil == "Profesor") {
-                                                        OutlinedButton(onClick = {
-                                                            // Navegar a editar tarea (usa navigator.parent para mantener comportamiento parecido al HomeTab)
-                                                            navigator.parent?.push(
-                                                                EditTaskScreen(
-                                                                    modelo.Tarea(
-                                                                        idTarea = tarea.id_tarea,
-                                                                        idClase = tarea.id_clase,
-                                                                        asunto = tarea.asunto,
-                                                                        descripcion = tarea.descripcion,
-                                                                        fechaInicio = tarea.fecha_inicio,
-                                                                        fechaFin = tarea.fecha_fin,
-                                                                        observaciones = tarea.observaciones,
-                                                                        nombreClase = tarea.nombre_clase ?: ""
+                                                        OutlinedButton(
+                                                            onClick = {
+                                                                // Navegar a editar tarea (usa navigator.parent para mantener comportamiento parecido al HomeTab)
+                                                                navigator.parent?.push(
+                                                                    EditTaskScreen(
+                                                                        modelo.Tarea(
+                                                                            idTarea = tarea.id_tarea,
+                                                                            idClase = tarea.id_clase,
+                                                                            asunto = tarea.asunto,
+                                                                            descripcion = tarea.descripcion,
+                                                                            fechaInicio = tarea.fecha_inicio,
+                                                                            fechaFin = tarea.fecha_fin,
+                                                                            observaciones = tarea.observaciones,
+                                                                            nombreClase = tarea.nombre_clase
+                                                                                ?: ""
+                                                                        )
                                                                     )
                                                                 )
+                                                            }, colors = ButtonDefaults.buttonColors(
+                                                                containerColor = Color.Gray,
+                                                                contentColor = Color.White
                                                             )
-                                                        }) {
+                                                        ) {
                                                             Text("Editar")
                                                         }
                                                         Spacer(modifier = Modifier.width(8.dp))
-                                                        Button(onClick = {
-                                                            tareaDelete = tarea
-                                                            showDialog = true
-                                                        }) {
+                                                        Button(
+                                                            onClick = {
+                                                                tareaDelete = tarea
+                                                                showDialog = true
+                                                            }, colors = ButtonDefaults.buttonColors(
+                                                                containerColor = MaterialTheme.colorScheme.error
+                                                            )
+                                                        ) {
                                                             Text("Eliminar")
                                                         }
                                                     }
@@ -312,16 +364,22 @@ object TaskTab : Tab {
                         Text("¿Seguro que deseas eliminar la tarea \"${tareaDelete?.asunto}\"?")
                     },
                     confirmButton = {
-                        TextButton(onClick = {
-                            tareaDelete?.let { eliminarTarea(it) }
-                            showDialog = false
-                        }) {
+                        TextButton(
+                            onClick = {
+                                tareaDelete?.let { eliminarTarea(it) }
+                                showDialog = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = Color.White
+                            )
+                        ) {
                             Text("Eliminar")
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showDialog = false }) {
-                            Text("Cancelar")
+                            Text("Cancelar", color = Color.Gray)
                         }
                     }
                 )
