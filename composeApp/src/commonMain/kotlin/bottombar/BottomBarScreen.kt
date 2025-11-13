@@ -250,7 +250,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                 title = { Text("Información de la app") },
                                 text = {
                                     Text(
-                                        "Versión: 2.0.5\n" +
+                                        "Versión: 2.0.7\n" +
                                                 "Desarrollado por: \n" +
                                                 "Nicolas Alvarado Soriano\n" +
                                                 "Juan Jose Rojas Nieto"
