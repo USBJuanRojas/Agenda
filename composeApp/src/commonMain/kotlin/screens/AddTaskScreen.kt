@@ -115,6 +115,21 @@ class AddTaskScreen : Screen {
             }
         }
 
+        fun validarFechaHora(): Boolean {
+            if (startTime != "" && endTime != "" && startDate != "" && endDate != "") {
+                val startMinutes = startTime.split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+                val endMinutes = endTime.split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+
+                val isSameDay = startDate == endDate
+                val isInvalid =
+                    (isSameDay && startMinutes >= endMinutes) || // Mismo día → validar horas
+                            (!isSameDay && startDate > endDate)
+                return isInvalid
+            } else {
+                return false
+            }
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -230,6 +245,16 @@ class AddTaskScreen : Screen {
 
                 fechaInicio = "${startDate}-${startTime}"
                 fechaFin = "${endDate}-${endTime}"
+
+                val isInvalid = validarFechaHora()
+
+                if (isInvalid) {
+                    Text(
+                        text = "⚠️ La fecha/hora de fin debe ser posterior a la de inicio",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
