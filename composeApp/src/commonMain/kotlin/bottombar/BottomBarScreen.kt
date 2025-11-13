@@ -109,21 +109,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                         )
                                     }
                                 )
-                                /*if (Objlogin.perfil == "Administrador"){
-                                    NavigationDrawerItem(
-                                        label = { Text("Listar Usuarios") },
-                                        selected = false,
-                                        onClick = {
-                                            navigator.push(ListUsers())
-                                        },
-                                        icon = {
-                                            Icon(
-                                                imageVector = Icons.Default.Person,
-                                                contentDescription = "Listar Usuarios"
-                                            )
-                                        }
-                                    )
-                                }*/
+
                                 NavigationDrawerItem(
                                     label = { Text("Cerrar sesión") },
                                     selected = false,
@@ -184,7 +170,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                                     Icons.Default.People,
                                                     contentDescription = null
                                                 )
-                                            }
+                                            },
+                                            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                                indicatorColor = Color(0xFFdb936c)     // aquí quitamos el sombreado
+                                            )
                                         )
                                     } else {
                                         NavigationBarItem(
@@ -193,7 +182,11 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                             label = { Text(TaskTab.options.title) },
                                             icon = {
                                                 TaskTab.options.icon?.let { Icon(it, null) }
-                                            }
+                                            },
+                                            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                                indicatorColor = Color(0xFFdb936c)     // aquí quitamos el sombreado
+                                            )
+
                                         )
                                     }
                                     NavigationBarItem(
@@ -202,7 +195,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                         label = { Text(HomeTab.options.title) },
                                         icon = {
                                             HomeTab.options.icon?.let { Icon(it, null) }
-                                        }
+                                        },
+                                        colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                            indicatorColor = Color(0xFFdb936c) // Naranja
+                                        )
                                     )
                                     if (Objlogin.perfil != "Administrador") {
                                         NavigationBarItem(
@@ -211,7 +207,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                             label = { Text(CalendarTab.options.title) },
                                             icon = {
                                                 CalendarTab.options.icon?.let { Icon(it, null) }
-                                            }
+                                            },
+                                            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                                indicatorColor = Color(0xFFdb936c) // Naranja
+                                            )
                                         )
                                     }
                                 }
@@ -220,14 +219,22 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                 if (tabNavigator.current == HomeTab && Objlogin.perfil == "Administrador") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddClassScreen())
-                                    }) {
-                                        Icon(Icons.Default.Add, contentDescription = "Agregar")
+                                    }, containerColor = Color(0xFFdb936c)) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Agregar",
+                                            tint = Color.White
+                                        )
                                     }
                                 } else if (tabNavigator.current == TaskTab && Objlogin.perfil == "Profesor") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddTaskScreen())
-                                    }) {
-                                        Icon(Icons.Default.Add, contentDescription = "Agregar")
+                                    }, containerColor = Color(0xFFdb936c)) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Agregar",
+                                            tint = Color.White
+                                        )
                                     }
                                 }
                             },
@@ -240,10 +247,12 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             androidx.compose.material3.AlertDialog(
                                 onDismissRequest = { showProfileDialog.value = false },
                                 confirmButton = {
-                                    androidx.compose.material3.TextButton(onClick = {
-                                        showProfileDialog.value = false
-                                    }) {
-                                        Text("Cerrar")
+                                    androidx.compose.material3.TextButton(
+                                        onClick = {
+                                            showProfileDialog.value = false
+                                        }
+                                    ) {
+                                        Text("Cerrar", color = Color.Gray)
                                     }
                                 },
                                 title = { Text("Perfil del usuario") },
@@ -261,10 +270,12 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             androidx.compose.material3.AlertDialog(
                                 onDismissRequest = { showInfoDialog.value = false },
                                 confirmButton = {
-                                    androidx.compose.material3.TextButton(onClick = {
-                                        showInfoDialog.value = false
-                                    }) {
-                                        Text("Cerrar")
+                                    androidx.compose.material3.TextButton(
+                                        onClick = {
+                                            showInfoDialog.value = false
+                                        }
+                                    ) {
+                                        Text("Cerrar", color = Color.Gray)
                                     }
                                 },
                                 title = { Text("Información de la app") },
