@@ -30,6 +30,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
@@ -125,17 +127,26 @@ class ListUsers : Screen {
             topBar = {
                 TopAppBar(
                     title = { Text("Listado de Usuarios") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFFF751F), // Naranja
+                        titleContentColor = Color.White
+                    ),
                     navigationIcon = {
                         IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Volver"
+                                Icons.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = Color.White
                             )
                         }
                     },
                     actions = {
                         IconButton(onClick = { cargar() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Recargar")
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Recargar",
+                                tint = Color.White
+                            )
                         }
                     }
                 )
@@ -155,7 +166,7 @@ class ListUsers : Screen {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(color = Color(0xFFFF751F))
                         }
                     }
 
@@ -195,7 +206,8 @@ class ListUsers : Screen {
                                             3 to "Estudiante"
                                         )
 
-                                        val rolNombre = roles.find { it.first == u.id_rol }?.second ?: "Desconocido"
+                                        val rolNombre = roles.find { it.first == u.id_rol }?.second
+                                            ?: "Desconocido"
 
                                         Text("Rol: $rolNombre")
 
@@ -205,9 +217,14 @@ class ListUsers : Screen {
                                                 .padding(top = 8.dp),
                                             horizontalArrangement = Arrangement.End
                                         ) {
-                                            OutlinedButton(onClick = {
-                                                navigator.push(EditUserScreen(u))
-                                            }) {
+                                            OutlinedButton(
+                                                onClick = {
+                                                    navigator.push(EditUserScreen(u))
+                                                }, colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color.Gray,
+                                                    contentColor = Color.White
+                                                )
+                                            ) {
                                                 Text("Editar")
                                             }
                                             Spacer(modifier = Modifier.width(8.dp))
@@ -238,16 +255,22 @@ class ListUsers : Screen {
                     title = { Text("Confirmar eliminación") },
                     text = { Text("¿Seguro que deseas eliminar al usuario ${userToDelete?.user}?") },
                     confirmButton = {
-                        TextButton(onClick = {
-                            eliminarUsuario(userToDelete!!)
-                            showDialog = false
-                        }) {
+                        TextButton(
+                            onClick = {
+                                eliminarUsuario(userToDelete!!)
+                                showDialog = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = Color.White
+                            ),
+                        ) {
                             Text("Eliminar")
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showDialog = false }) {
-                            Text("Cancelar")
+                            Text("Cancelar", color = Color.Gray)
                         }
                     }
                 )

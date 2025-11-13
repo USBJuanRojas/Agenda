@@ -1,17 +1,41 @@
 package screens
 
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -19,20 +43,15 @@ import bottombar.BottomBarScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import io.ktor.client.*
-import io.ktor.client.request.*
+import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.submitForm
-import io.ktor.client.statement.*
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Parameters
-import io.ktor.http.contentType
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.put
 import modelo.User
 
 
@@ -70,7 +89,8 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
                         .filter { it.id_rol == 3 }
                     val enClase = json.decodeFromString<List<User>>(inscritosTxt)
 
-                    val enClaseIds = enClase.map { it.id_usuario } // o it.id_usuario según tu modelo
+                    val enClaseIds =
+                        enClase.map { it.id_usuario } // o it.id_usuario según tu modelo
                     val disponiblesList = todos.filterNot { it.id_usuario in enClaseIds }
 
                     disponibles = disponiblesList
@@ -92,8 +112,11 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
                 val client = HttpClient()
                 try {
                     // 1️⃣ Obtener datos de la clase actual (a la que se va a matricular)
-                    val claseTxt = client.get("$baseUrl/obtenerClaseEstudiante.php?id_clase=$idClase").bodyAsText()
-                    val claseJson = json.parseToJsonElement(claseTxt).jsonObject["data"]!!.jsonObject
+                    val claseTxt =
+                        client.get("$baseUrl/obtenerClaseEstudiante.php?id_clase=$idClase")
+                            .bodyAsText()
+                    val claseJson =
+                        json.parseToJsonElement(claseTxt).jsonObject["data"]!!.jsonObject
 
                     val dias = claseJson["dias_semana"]?.jsonPrimitive?.content ?: ""
                     val horaInicio = claseJson["hora_inicio"]?.jsonPrimitive?.content ?: ""
@@ -146,7 +169,6 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
         }
 
 
-
         // Función: eliminar estudiante
         fun eliminar(user: User) {
             scope.launch {
@@ -184,9 +206,17 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
             topBar = {
                 TopAppBar(
                     title = { Text("Gestión de estudiantes de clase") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFFF751F), // Naranja
+                        titleContentColor = Color.White
+                    ),
                     navigationIcon = {
                         IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                            Icon(
+                                Icons.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = Color.White
+                            )
                         }
                     }
                 )
@@ -237,9 +267,18 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
                                     ) {
                                         Column {
                                             Text("${est.nombre} ${est.apellido}")
-                                            Text(est.correo, style = MaterialTheme.typography.bodySmall)
+                                            Text(
+                                                est.correo,
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
                                         }
-                                        Button(onClick = { agregar(est) }) {
+                                        Button(
+                                            onClick = { agregar(est) },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color.DarkGray,
+                                                contentColor = Color.White
+                                            )
+                                        ) {
                                             Text("Agregar")
                                         }
                                     }
@@ -276,7 +315,10 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
                                     ) {
                                         Column {
                                             Text("${est.nombre} ${est.apellido}")
-                                            Text(est.correo, style = MaterialTheme.typography.bodySmall)
+                                            Text(
+                                                est.correo,
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
                                         }
                                         Button(
                                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
@@ -293,4 +335,4 @@ class ManageStudentsClassScreen(private val idClase: Int) : Screen {
             }
         )
     }
-    }
+}

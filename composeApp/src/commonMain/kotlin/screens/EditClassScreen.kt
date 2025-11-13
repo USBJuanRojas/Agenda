@@ -1,11 +1,34 @@
 package screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,12 +38,16 @@ import bottombar.HomeTab
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.Parameters
+import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -29,9 +56,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -93,7 +118,8 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 selectedProfesor = parsedProfesores.find { it.id == clase.id_profesor.toString() }
 
                 // Horario
-                val horarioResponse = client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
+                val horarioResponse =
+                    client.get("http://10.0.2.2/API/obtenerHorarioClase.php?id_clase=${clase.id_clase}")
                 val horarios = Json { ignoreUnknownKeys = true }
                     .parseToJsonElement(horarioResponse.bodyAsText())
                     .jsonArray
@@ -140,10 +166,11 @@ class EditClassScreen(private val clase: Clase) : Screen {
 
                 try {
                     // 1️⃣ Validar horario del profesor
-                    val responseValProf = client.post("http://10.0.2.2/API/validarHorarioClaseProfesor.php") {
-                        contentType(ContentType.Application.Json)
-                        setBody(
-                            """
+                    val responseValProf =
+                        client.post("http://10.0.2.2/API/validarHorarioClaseProfesor.php") {
+                            contentType(ContentType.Application.Json)
+                            setBody(
+                                """
                             {
                                 "id_profesor": ${selectedProfesor!!.id},
                                 "dias_semana": "$diasSeleccionados",
@@ -152,12 +179,13 @@ class EditClassScreen(private val clase: Clase) : Screen {
                                 "id_clase": ${clase.id_clase}
                             }
                             """.trimIndent()
-                        )
-                    }.bodyAsText()
+                            )
+                        }.bodyAsText()
 
                     val resValProf = Json.parseToJsonElement(responseValProf).jsonObject
                     if (resValProf["success"]?.jsonPrimitive?.boolean == false) {
-                        val mensajeError = resValProf["message"]?.jsonPrimitive?.content ?: "Conflicto detectado"
+                        val mensajeError =
+                            resValProf["message"]?.jsonPrimitive?.content ?: "Conflicto detectado"
                         val conflictosArray = resValProf["conflictos"]?.jsonArray
 
                         val diasMap = mapOf(
@@ -169,12 +197,14 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         if (conflictosArray != null && conflictosArray.isNotEmpty()) {
                             for (conflicto in conflictosArray) {
                                 val obj = conflicto.jsonObject
-                                val nombreClase = obj["nombre_clase"]?.jsonPrimitive?.content ?: "Sin nombre"
+                                val nombreClase =
+                                    obj["nombre_clase"]?.jsonPrimitive?.content ?: "Sin nombre"
                                 val dias = obj["dias_semana"]?.jsonPrimitive?.content ?: "N/A"
                                 val horaInicio = obj["hora_inicio"]?.jsonPrimitive?.content ?: "N/A"
                                 val horaFin = obj["hora_fin"]?.jsonPrimitive?.content ?: "N/A"
 
-                                val diasLegibles = dias.mapNotNull { diasMap[it] }.joinToString(" - ")
+                                val diasLegibles =
+                                    dias.mapNotNull { diasMap[it] }.joinToString(" - ")
                                 detalleConflictos += "\n📘 $nombreClase ($diasLegibles) $horaInicio - $horaFin"
                             }
                         }
@@ -236,10 +266,17 @@ class EditClassScreen(private val clase: Clase) : Screen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Editar Clase") },
+                    title = { Text("Editar Clase") }, colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFFF751F), // Naranja
+                        titleContentColor = Color.White
+                    ),
                     navigationIcon = {
                         IconButton(onClick = { navigator.push(BottomBarScreen(initialTab = HomeTab)) }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                            Icon(
+                                Icons.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = Color.White
+                            )
                         }
                     }
                 )
@@ -274,7 +311,9 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 )
 
                 // 🔹 Dropdown de profesores
-                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }) {
                     OutlinedTextField(
                         value = selectedProfesor?.nombre ?: "Seleccionar profesor",
                         onValueChange = {},
@@ -282,7 +321,9 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         label = { Text("Profesor") },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }) {
                         profesores.forEach { profesor ->
                             DropdownMenuItem(
                                 text = { Text(profesor.nombre) },
@@ -311,7 +352,10 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     SimulatedTimePicker(
                         label = "Inicio",
                         horaActual = startTime,
@@ -327,7 +371,10 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 }
 
                 if (startTime >= endTime) {
-                    Text("⚠️ La hora de fin debe ser posterior", color = MaterialTheme.colorScheme.error)
+                    Text(
+                        "⚠️ La hora de fin debe ser posterior",
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
 
                 if (cargando) {

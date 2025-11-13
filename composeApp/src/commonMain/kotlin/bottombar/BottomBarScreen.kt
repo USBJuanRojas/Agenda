@@ -23,10 +23,12 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -38,11 +40,11 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinx.coroutines.launch
+import modelo.Objlogin
 import screens.AddClassScreen
 import screens.AddTaskScreen
-import screens.LoginScreen
-import modelo.Objlogin
 import screens.ListUsers
+import screens.LoginScreen
 
 class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por defecto será HomeTab
 
@@ -53,8 +55,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
         val scope = rememberCoroutineScope()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         //mostrar los diálogos del menú
-        val showProfileDialog = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-        val showInfoDialog = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        val showProfileDialog =
+            androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        val showInfoDialog =
+            androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
         TabNavigator(initialTab) { // HomeTab por defecto
             val tabNavigator = LocalTabNavigator.current
@@ -149,11 +153,19 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             topBar = {
                                 TopAppBar(
                                     title = { Text(tabNavigator.current.options.title) },
+                                    colors = TopAppBarDefaults.topAppBarColors(
+                                        containerColor = Color(0xFFFF751F), // Naranja
+                                        titleContentColor = Color.White
+                                    ),
                                     actions = {
                                         IconButton(onClick = {
                                             scope.launch { drawerState.open() }
                                         }) {
-                                            Icon(Icons.Default.Menu, contentDescription = "Menú")
+                                            Icon(
+                                                Icons.Default.Menu,
+                                                contentDescription = "Menú",
+                                                tint = Color.White
+                                            )
                                         }
                                     }
                                 )
@@ -167,10 +179,14 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                                 navigator.push(ListUsers())
                                             },
                                             label = { Text("Usuarios") },
-                                            icon = { Icon(Icons.Default.People, contentDescription = null) }
+                                            icon = {
+                                                Icon(
+                                                    Icons.Default.People,
+                                                    contentDescription = null
+                                                )
+                                            }
                                         )
-                                    }
-                                    else {
+                                    } else {
                                         NavigationBarItem(
                                             selected = tabNavigator.current == TaskTab,
                                             onClick = { tabNavigator.current = TaskTab },
@@ -224,7 +240,9 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             androidx.compose.material3.AlertDialog(
                                 onDismissRequest = { showProfileDialog.value = false },
                                 confirmButton = {
-                                    androidx.compose.material3.TextButton(onClick = { showProfileDialog.value = false }) {
+                                    androidx.compose.material3.TextButton(onClick = {
+                                        showProfileDialog.value = false
+                                    }) {
                                         Text("Cerrar")
                                     }
                                 },
@@ -243,7 +261,9 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             androidx.compose.material3.AlertDialog(
                                 onDismissRequest = { showInfoDialog.value = false },
                                 confirmButton = {
-                                    androidx.compose.material3.TextButton(onClick = { showInfoDialog.value = false }) {
+                                    androidx.compose.material3.TextButton(onClick = {
+                                        showInfoDialog.value = false
+                                    }) {
                                         Text("Cerrar")
                                     }
                                 },
