@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -38,7 +39,8 @@ fun SimulatedTimePicker(
         Text(
             "$label: ${if (horaActual.isEmpty()) "--:--" else horaActual}",
             modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = Color.Gray
         )
     }
 
@@ -56,7 +58,7 @@ fun SimulatedTimePicker(
                             label = "Hora",
                             range = (0..23).toList(),
                             selected = selectedHour,
-                            onSelect = { selectedHour = it }
+                            onSelect = { selectedHour = it },
                         )
                         Spacer(Modifier.width(12.dp))
                         DropdownMenuSelector(
@@ -74,12 +76,12 @@ fun SimulatedTimePicker(
                     onTimeSelected(horaFormateada)
                     showDialog = false
                 }) {
-                    Text("Aceptar")
+                    Text("Aceptar", color = Color.Gray)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Cancelar")
+                    Text("Cancelar", color = MaterialTheme.colorScheme.error)
                 }
             }
         )
@@ -97,7 +99,7 @@ fun DropdownMenuSelector(
 
     Box {
         OutlinedButton(onClick = { expanded = true }) {
-            Text("$label: ${selected.toString().padStart(2, '0')}")
+            Text("$label: ${selected.toString().padStart(2, '0')}", color = Color.Gray)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             range.forEach { value ->

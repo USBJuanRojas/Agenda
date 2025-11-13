@@ -23,10 +23,12 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -38,11 +40,11 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinx.coroutines.launch
+import modelo.Objlogin
 import screens.AddClassScreen
 import screens.AddTaskScreen
-import screens.LoginScreen
-import modelo.Objlogin
 import screens.ListUsers
+import screens.LoginScreen
 
 class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por defecto será HomeTab
 
@@ -53,8 +55,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
         val scope = rememberCoroutineScope()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         //mostrar los diálogos del menú
-        val showProfileDialog = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-        val showInfoDialog = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        val showProfileDialog =
+            androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        val showInfoDialog =
+            androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
         TabNavigator(initialTab) { // HomeTab por defecto
             val tabNavigator = LocalTabNavigator.current
@@ -105,21 +109,7 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                         )
                                     }
                                 )
-                                /*if (Objlogin.perfil == "Administrador"){
-                                    NavigationDrawerItem(
-                                        label = { Text("Listar Usuarios") },
-                                        selected = false,
-                                        onClick = {
-                                            navigator.push(ListUsers())
-                                        },
-                                        icon = {
-                                            Icon(
-                                                imageVector = Icons.Default.Person,
-                                                contentDescription = "Listar Usuarios"
-                                            )
-                                        }
-                                    )
-                                }*/
+
                                 NavigationDrawerItem(
                                     label = { Text("Cerrar sesión") },
                                     selected = false,
@@ -149,11 +139,19 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             topBar = {
                                 TopAppBar(
                                     title = { Text(tabNavigator.current.options.title) },
+                                    colors = TopAppBarDefaults.topAppBarColors(
+                                        containerColor = Color(0xFFFF751F), // Naranja
+                                        titleContentColor = Color.White
+                                    ),
                                     actions = {
                                         IconButton(onClick = {
                                             scope.launch { drawerState.open() }
                                         }) {
-                                            Icon(Icons.Default.Menu, contentDescription = "Menú")
+                                            Icon(
+                                                Icons.Default.Menu,
+                                                contentDescription = "Menú",
+                                                tint = Color.White
+                                            )
                                         }
                                     }
                                 )
@@ -167,17 +165,28 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                                 navigator.push(ListUsers())
                                             },
                                             label = { Text("Usuarios") },
-                                            icon = { Icon(Icons.Default.People, contentDescription = null) }
+                                            icon = {
+                                                Icon(
+                                                    Icons.Default.People,
+                                                    contentDescription = null
+                                                )
+                                            },
+                                            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                                indicatorColor = Color(0xFFdb936c)     // aquí quitamos el sombreado
+                                            )
                                         )
-                                    }
-                                    else {
+                                    } else {
                                         NavigationBarItem(
                                             selected = tabNavigator.current == TaskTab,
                                             onClick = { tabNavigator.current = TaskTab },
                                             label = { Text(TaskTab.options.title) },
                                             icon = {
                                                 TaskTab.options.icon?.let { Icon(it, null) }
-                                            }
+                                            },
+                                            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                                indicatorColor = Color(0xFFdb936c)     // aquí quitamos el sombreado
+                                            )
+
                                         )
                                     }
                                     NavigationBarItem(
@@ -186,7 +195,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                         label = { Text(HomeTab.options.title) },
                                         icon = {
                                             HomeTab.options.icon?.let { Icon(it, null) }
-                                        }
+                                        },
+                                        colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                            indicatorColor = Color(0xFFdb936c) // Naranja
+                                        )
                                     )
                                     if (Objlogin.perfil != "Administrador") {
                                         NavigationBarItem(
@@ -195,7 +207,10 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                             label = { Text(CalendarTab.options.title) },
                                             icon = {
                                                 CalendarTab.options.icon?.let { Icon(it, null) }
-                                            }
+                                            },
+                                            colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
+                                                indicatorColor = Color(0xFFdb936c) // Naranja
+                                            )
                                         )
                                     }
                                 }
@@ -204,14 +219,22 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                                 if (tabNavigator.current == HomeTab && Objlogin.perfil == "Administrador") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddClassScreen())
-                                    }) {
-                                        Icon(Icons.Default.Add, contentDescription = "Agregar")
+                                    }, containerColor = Color(0xFFdb936c)) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Agregar",
+                                            tint = Color.White
+                                        )
                                     }
                                 } else if (tabNavigator.current == TaskTab && Objlogin.perfil == "Profesor") {
                                     FloatingActionButton(onClick = {
                                         navigator.push(AddTaskScreen())
-                                    }) {
-                                        Icon(Icons.Default.Add, contentDescription = "Agregar")
+                                    }, containerColor = Color(0xFFdb936c)) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Agregar",
+                                            tint = Color.White
+                                        )
                                     }
                                 }
                             },
@@ -224,8 +247,12 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             androidx.compose.material3.AlertDialog(
                                 onDismissRequest = { showProfileDialog.value = false },
                                 confirmButton = {
-                                    androidx.compose.material3.TextButton(onClick = { showProfileDialog.value = false }) {
-                                        Text("Cerrar")
+                                    androidx.compose.material3.TextButton(
+                                        onClick = {
+                                            showProfileDialog.value = false
+                                        }
+                                    ) {
+                                        Text("Cerrar", color = Color.Gray)
                                     }
                                 },
                                 title = { Text("Perfil del usuario") },
@@ -243,14 +270,18 @@ class BottomBarScreen(private val initialTab: Tab = HomeTab) : Screen { // por d
                             androidx.compose.material3.AlertDialog(
                                 onDismissRequest = { showInfoDialog.value = false },
                                 confirmButton = {
-                                    androidx.compose.material3.TextButton(onClick = { showInfoDialog.value = false }) {
-                                        Text("Cerrar")
+                                    androidx.compose.material3.TextButton(
+                                        onClick = {
+                                            showInfoDialog.value = false
+                                        }
+                                    ) {
+                                        Text("Cerrar", color = Color.Gray)
                                     }
                                 },
                                 title = { Text("Información de la app") },
                                 text = {
                                     Text(
-                                        "Versión: 2.0.7\n" +
+                                        "Versión: 2.0.9\n" +
                                                 "Desarrollado por: \n" +
                                                 "Nicolas Alvarado Soriano\n" +
                                                 "Juan Jose Rojas Nieto"

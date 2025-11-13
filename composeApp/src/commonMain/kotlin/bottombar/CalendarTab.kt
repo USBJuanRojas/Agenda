@@ -152,7 +152,7 @@ object CalendarTab : Tab {
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = Color(0xFFFF751F),)
                 }
             } else {
                 WeeklySchedule(
@@ -169,7 +169,7 @@ object CalendarTab : Tab {
     @Composable
     fun WeeklySchedule(clases: List<Clase>, modifier: Modifier = Modifier) {
         val dias = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
-        val horas = (6..18).toList()
+        val horas = (6..20).toList()
         val cellHeight = 60.dp
         val dayWidth = 120.dp
 

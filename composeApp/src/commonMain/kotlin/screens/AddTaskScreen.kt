@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
 import cafe.adriel.voyager.core.screen.Screen
@@ -134,9 +135,17 @@ class AddTaskScreen : Screen {
             topBar = {
                 TopAppBar(
                     title = { Text("Agregar Tarea") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFFF751F), // Naranja
+                        titleContentColor = Color.White
+                    ),
                     navigationIcon = {
                         IconButton(onClick = { navigator.push(BottomBarScreen(initialTab = TaskTab)) }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                            Icon(
+                                Icons.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = Color.White
+                            )
                         }
                     }
                 )
@@ -162,7 +171,12 @@ class AddTaskScreen : Screen {
                         label = { Text("Clase") },
                         modifier = Modifier
                             .menuAnchor()
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            cursorColor = Color.DarkGray,
+                            focusedIndicatorColor = Color(0xFFFF751F),
+                            focusedLabelColor = Color(0xFFFF751F)
+                        )
                     )
 
                     ExposedDropdownMenu(
@@ -185,21 +199,36 @@ class AddTaskScreen : Screen {
                     value = asunto,
                     onValueChange = { asunto = it },
                     label = { Text("Asunto") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
                     label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = observaciones,
                     onValueChange = { observaciones = it },
                     label = { Text("Observaciones") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 // --- Selectores de inicio ---
@@ -259,7 +288,11 @@ class AddTaskScreen : Screen {
 
                 Button(
                     onClick = { crearTarea() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF751F),
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Guardar")
                 }

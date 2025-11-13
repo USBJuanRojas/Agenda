@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,7 +17,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -62,7 +66,15 @@ class LoginScreen : Screen {
         val scope = rememberCoroutineScope()
 
         Scaffold(
-            topBar = { TopAppBar(title = { Text("Inicia Sesión") }) }
+            topBar = {
+                TopAppBar(
+                    title = { Text("Inicia Sesión", color = Color.White) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFFF751F), // Naranja
+                        titleContentColor = Color.White
+                    )
+                )
+            }
         ) { padding ->
             Column(
                 modifier = Modifier
@@ -75,7 +87,12 @@ class LoginScreen : Screen {
                 OutlinedTextField(
                     value = user,
                     onValueChange = { user = it },
-                    label = { Text("Usuario") }
+                    label = { Text("Usuario") },
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
@@ -93,52 +110,61 @@ class LoginScreen : Screen {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(imageVector = image, contentDescription = null)
                         }
-                    }
+                    }, colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
-                Button(onClick = {
-                    scope.launch {
-                        try {
-                            val response: HttpResponse =
-                                client.get("http://10.0.2.2/API/login.php") {
-                                    url {
-                                        parameters.append("user", user)
-                                        parameters.append("password", password)
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val response: HttpResponse =
+                                    client.get("http://10.0.2.2/API/login.php") {
+                                        url {
+                                            parameters.append("user", user)
+                                            parameters.append("password", password)
+                                        }
+                                    }
+
+                                val responseText = response.bodyAsText()
+                                println("Respuesta: $responseText")
+
+                                val json = Json.parseToJsonElement(responseText).jsonObject
+                                val success = json["success"]?.jsonPrimitive?.booleanOrNull ?: false
+
+                                if (success) {
+                                    // Guardar datos en el objeto global
+                                    Objlogin.idUsu = json["idUsu"]?.jsonPrimitive?.content ?: ""
+                                    Objlogin.nomUsu = json["nomUsu"]?.jsonPrimitive?.content ?: ""
+                                    Objlogin.apeUsu = json["apeUsu"]?.jsonPrimitive?.content ?: ""
+                                    Objlogin.perfil = json["perfil"]?.jsonPrimitive?.content ?: ""
+
+                                    withContext(Dispatchers.Main) {
+                                        navigator.push(BottomBarScreen())
+
+                                    }
+
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        loginError = true
                                     }
                                 }
 
-                            val responseText = response.bodyAsText()
-                            println("Respuesta: $responseText")
-
-                            val json = Json.parseToJsonElement(responseText).jsonObject
-                            val success = json["success"]?.jsonPrimitive?.booleanOrNull ?: false
-
-                            if (success) {
-                                // Guardar datos en el objeto global
-                                Objlogin.idUsu = json["idUsu"]?.jsonPrimitive?.content ?: ""
-                                Objlogin.nomUsu = json["nomUsu"]?.jsonPrimitive?.content ?: ""
-                                Objlogin.apeUsu = json["apeUsu"]?.jsonPrimitive?.content ?: ""
-                                Objlogin.perfil = json["perfil"]?.jsonPrimitive?.content ?: ""
-
-                                withContext(Dispatchers.Main) {
-                                    navigator.push(BottomBarScreen())
-
-                                }
-
-                            } else {
+                            } catch (e: Exception) {
+                                println("Error: ${e.message}")
                                 withContext(Dispatchers.Main) {
                                     loginError = true
                                 }
                             }
-
-                        } catch (e: Exception) {
-                            println("Error: ${e.message}")
-                            withContext(Dispatchers.Main) {
-                                loginError = true
-                            }
                         }
-                    }
-                }) {
+                    }, colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF751F),
+                        contentColor = Color.White
+                    )
+                ) {
                     Text("Iniciar Sesión")
                 }
 
@@ -150,7 +176,7 @@ class LoginScreen : Screen {
                 }
 
                 TextButton(onClick = { navigator.push(RegisterScreen()) }) {
-                    Text("Registrarse")
+                    Text("Registrarse", color = Color(0xFFFF751F))
                 }
             }
         }

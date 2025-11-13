@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -50,7 +51,8 @@ fun SimulatedDatePicker(
         Text(
             text = "$label: ${if (fechaActual.isEmpty()) "--/--/----" else fechaActual}",
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.Gray
         )
     }
 
@@ -67,12 +69,12 @@ fun SimulatedDatePicker(
                     onDateSelected(fecha)
                     showDialog = false
                 }) {
-                    Text("Aceptar")
+                    Text("Aceptar", color = Color.Gray)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Cancelar")
+                    Text("Cancelar", color = MaterialTheme.colorScheme.error)
                 }
             },
             title = { Text("Seleccionar fecha") },
@@ -135,7 +137,7 @@ fun DropdownSelector(
             onClick = { expanded = true },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(selectedValue.toString())
+            Text(selectedValue.toString(), color = Color.Gray)
         }
 
         DropdownMenu(

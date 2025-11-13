@@ -1,24 +1,58 @@
 package screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bottombar.BottomBarScreen
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.http.content.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.Parameters
+import io.ktor.http.contentType
+import io.ktor.http.formUrlEncode
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -107,10 +141,11 @@ class AddClassScreen : Screen {
                         .joinToString("")
 
                     // --- 1️⃣ Validar conflicto de horarios (profesor) ---
-                    val responseValProf = client.post("http://10.0.2.2/API/validarHorarioClaseProfesor.php") {
-                        contentType(ContentType.Application.Json)
-                        setBody(
-                            """
+                    val responseValProf =
+                        client.post("http://10.0.2.2/API/validarHorarioClaseProfesor.php") {
+                            contentType(ContentType.Application.Json)
+                            setBody(
+                                """
                     {
                         "id_profesor": ${selectedProfesor!!.id},
                         "dias_semana": "$diasSeleccionados",
@@ -118,13 +153,14 @@ class AddClassScreen : Screen {
                         "hora_fin": "$endTime"
                     }
                     """.trimIndent()
-                        )
-                    }.bodyAsText()
+                            )
+                        }.bodyAsText()
 
                     val resValProf = Json.parseToJsonElement(responseValProf).jsonObject
 
                     if (resValProf["success"]?.jsonPrimitive?.boolean == false) {
-                        val mensaje = resValProf["message"]?.jsonPrimitive?.content ?: "Conflicto detectado"
+                        val mensaje =
+                            resValProf["message"]?.jsonPrimitive?.content ?: "Conflicto detectado"
                         val conflictosArray = resValProf["conflictos"]?.jsonArray
 
                         var detalleConflictos = ""
@@ -132,12 +168,14 @@ class AddClassScreen : Screen {
                         if (conflictosArray != null && conflictosArray.isNotEmpty()) {
                             for (conflicto in conflictosArray) {
                                 val obj = conflicto.jsonObject
-                                val nombreClase = obj["nombre_clase"]?.jsonPrimitive?.content ?: "Sin nombre"
+                                val nombreClase =
+                                    obj["nombre_clase"]?.jsonPrimitive?.content ?: "Sin nombre"
                                 val dias = obj["dias_semana"]?.jsonPrimitive?.content ?: "N/A"
                                 val inicio = obj["hora_inicio"]?.jsonPrimitive?.content ?: "N/A"
                                 val fin = obj["hora_fin"]?.jsonPrimitive?.content ?: "N/A"
 
-                                val diasLegibles = dias.mapNotNull { diasMap[it] }.joinToString(" - ")
+                                val diasLegibles =
+                                    dias.mapNotNull { diasMap[it] }.joinToString(" - ")
 
                                 detalleConflictos += "\n📘 $nombreClase ($diasLegibles) $inicio - $fin"
                             }
@@ -207,9 +245,17 @@ class AddClassScreen : Screen {
             topBar = {
                 TopAppBar(
                     title = { Text("Agregar Clase") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFFF751F), // Naranja
+                        titleContentColor = Color.White
+                    ),
                     navigationIcon = {
                         IconButton(onClick = { navigator.push(BottomBarScreen()) }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                            Icon(
+                                Icons.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = Color.White
+                            )
                         }
                     }
                 )
@@ -226,20 +272,35 @@ class AddClassScreen : Screen {
                     value = className,
                     onValueChange = { className = it },
                     label = { Text("Nombre Clase") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descripción") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 OutlinedTextField(
                     value = place,
                     onValueChange = { place = it },
                     label = { Text("Lugar") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        cursorColor = Color.DarkGray,
+                        focusedIndicatorColor = Color(0xFFFF751F),
+                        focusedLabelColor = Color(0xFFFF751F)
+                    )
                 )
 
                 // 🔹 Dropdown Profesores
@@ -254,7 +315,12 @@ class AddClassScreen : Screen {
                         label = { Text("Profesor") },
                         modifier = Modifier
                             .menuAnchor()
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            cursorColor = Color.DarkGray,
+                            focusedIndicatorColor = Color(0xFFFF751F),
+                            focusedLabelColor = Color(0xFFFF751F)
+                        )
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -288,7 +354,10 @@ class AddClassScreen : Screen {
                         ) {
                             Checkbox(
                                 checked = seleccionDias[key] ?: false,
-                                onCheckedChange = { seleccionDias[key] = it }
+                                onCheckedChange = { seleccionDias[key] = it },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Color(0xFFFF751F)
+                                )
                             )
                             Text(label)
                         }
@@ -323,7 +392,11 @@ class AddClassScreen : Screen {
 
                 Button(
                     onClick = { createClass() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF751F),
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Guardar")
                 }
