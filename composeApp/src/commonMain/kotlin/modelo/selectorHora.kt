@@ -17,9 +17,19 @@ fun SimulatedTimePicker(
     onTimeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val horaInicial = remember(horaActual) {
+        if (horaActual.isNotEmpty() && horaActual.contains(":")) {
+            val partes = horaActual.split(":")
+            val hora = partes.getOrNull(0)?.toIntOrNull() ?: 0
+            val minuto = partes.getOrNull(1)?.toIntOrNull() ?: 0
+            Pair(hora, minuto)
+        } else {
+            Pair(0, 0)
+        }
+    }
     var showDialog by remember { mutableStateOf(false) }
-    var selectedHour by remember { mutableStateOf(0) }
-    var selectedMinute by remember { mutableStateOf(0) }
+    var selectedHour by remember { mutableStateOf(horaInicial.first) }
+    var selectedMinute by remember { mutableStateOf(horaInicial.second) }
 
     OutlinedButton(
         onClick = { showDialog = true },

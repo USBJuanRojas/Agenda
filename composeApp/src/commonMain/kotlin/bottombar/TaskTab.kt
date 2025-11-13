@@ -247,7 +247,14 @@ object TaskTab : Tab {
                                                     style = MaterialTheme.typography.titleMedium
                                                 )
                                                 Text("Descripción: ${tarea.descripcion}")
-                                                Text("Inicio: ${tarea.fecha_inicio} | Fin: ${tarea.fecha_fin}")
+                                                val horaInicio = tarea.fecha_inicio.split("-")[1]
+                                                val horaFin = tarea.fecha_fin.split("-")[1]
+                                                val diaInicio = tarea.fecha_inicio.split("-")[0]
+                                                val diaFin = tarea.fecha_fin.split("-")[0]
+                                                Text("Fecha inicio: $diaInicio")
+                                                Text("Fecha fin: $diaFin")
+                                                Text("Hora inicio: $horaInicio | Hora fin: $horaFin")
+                                                //Text("Inicio: ${tarea.fecha_inicio} | Fin: ${tarea.fecha_fin}")
                                                 tarea.observaciones?.let {
                                                     Text("Obs: $it")
                                                 }
