@@ -220,6 +220,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     responseStatus = "⚠️ Error: ${e.message}"
                 } finally {
                     client.close()
+                    navigator.push(BottomBarScreen(initialTab = HomeTab))
                 }
 
                 withContext(Dispatchers.Main) {

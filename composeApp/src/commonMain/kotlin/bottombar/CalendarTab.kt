@@ -2,9 +2,11 @@ package bottombar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -32,8 +34,17 @@ object CalendarTab : Tab {
 
     @Composable
     override fun Content() {
-        Box(Modifier.fillMaxSize().background(Color.Gray), contentAlignment = Alignment.Center) {
+        var dias = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+        Box(Modifier.fillMaxSize().background(Color.White), contentAlignment = Alignment.Center) {
             Text("CalendarScreen", fontSize = 22.sp, color = Color.White)
+            Box(){
+                Row {
+                    for (dia in dias)
+                        Card {
+                            Text("${dia}")
+                        }
+                }
+            }
         }
     }
 }
