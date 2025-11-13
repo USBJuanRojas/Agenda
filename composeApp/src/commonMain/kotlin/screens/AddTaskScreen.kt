@@ -288,7 +288,11 @@ class AddTaskScreen : Screen {
 
                 Button(
                     onClick = { crearTarea() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF751F),
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Guardar")
                 }

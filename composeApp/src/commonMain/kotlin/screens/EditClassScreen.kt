@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -294,7 +296,7 @@ class EditClassScreen(private val clase: Clase) : Screen {
                     value = className,
                     onValueChange = { className = it },
                     label = { Text("Nombre de la clase") },
-                    modifier = Modifier.fillMaxWidth(),colors = TextFieldDefaults.colors(
+                    modifier = Modifier.fillMaxWidth(), colors = TextFieldDefaults.colors(
                         cursorColor = Color.DarkGray,
                         focusedIndicatorColor = Color(0xFFFF751F),
                         focusedLabelColor = Color(0xFFFF751F)
@@ -365,7 +367,10 @@ class EditClassScreen(private val clase: Clase) : Screen {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Checkbox(
                                 checked = seleccionDias[key] ?: false,
-                                onCheckedChange = { seleccionDias[key] = it }
+                                onCheckedChange = { seleccionDias[key] = it },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Color(0xFFFF751F)
+                                )
                             )
                             Text(label)
                         }
@@ -398,9 +403,19 @@ class EditClassScreen(private val clase: Clase) : Screen {
                 }
 
                 if (cargando) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = Color(0xFFFF751F))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        color = Color(0xFFFF751F)
+                    )
                 } else {
-                    Button(onClick = { editarClase() }, modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = { editarClase() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFF751F),
+                            contentColor = Color.White
+                        )
+                    ) {
                         Text("Guardar cambios")
                     }
                 }

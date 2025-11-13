@@ -12,7 +12,9 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -352,7 +354,10 @@ class AddClassScreen : Screen {
                         ) {
                             Checkbox(
                                 checked = seleccionDias[key] ?: false,
-                                onCheckedChange = { seleccionDias[key] = it }
+                                onCheckedChange = { seleccionDias[key] = it },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Color(0xFFFF751F)
+                                )
                             )
                             Text(label)
                         }
@@ -387,7 +392,11 @@ class AddClassScreen : Screen {
 
                 Button(
                     onClick = { createClass() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF751F),
+                        contentColor = Color.White
+                    )
                 ) {
                     Text("Guardar")
                 }
